@@ -1,0 +1,39 @@
+# .NET build output
+bin/
+obj/
+build/
+release/
+artifacts/
+
+# Visual Studio and IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Tests and coverage
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# Packages and publications
+*.nupkg
+*.snupkg
+*.appx
+*.msix
+
+# Operating system files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary files and logs
+*.tmp
+*.temp
+*.log
+*.bak
+*.zip

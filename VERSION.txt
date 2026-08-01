@@ -1,0 +1,5 @@
+DualSense Bluetooth Audio v0.0.1
+Interface: 0.0.1
+Preserved audio engine: Protocol Lab V5.5 SendQueue
+Architectures: Windows x64 and Windows x86
+Lighting BETA: close DSX before testing control from this app

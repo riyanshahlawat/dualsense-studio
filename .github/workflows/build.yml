@@ -1,0 +1,39 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.runtime }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [win-x64, win-x86]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Publish
+        shell: cmd
+        run: BUILD_RUNTIME.bat ${{ matrix.runtime }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: DualSense-Bluetooth-Audio_v0.0.1_${{ matrix.runtime }}
+          path: build/${{ matrix.runtime }}/**
+          if-no-files-found: error
