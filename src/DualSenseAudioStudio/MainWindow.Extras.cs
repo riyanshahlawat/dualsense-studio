@@ -117,6 +117,28 @@ public partial class MainWindow
         }
     }
 
+    // Desktop mode: controller acts as mouse + keyboard for any app (PS + Options toggles).
+    private void SetDesktopMode(bool on)
+    {
+        Services.GamepadBridge.DesktopMode = on;
+        _synchronizing = true;
+        DesktopModeCheckBox.IsChecked = on;
+        _synchronizing = false;
+        _tray?.ShowBalloonTip(2500, on ? "Desktop mode ON" : "Desktop mode OFF",
+            on ? "Right stick = mouse, ✕/R2 = click, □/L2 = right-click, left stick = scroll. PS + Options to exit."
+               : "Controller is back to game mode.",
+            Forms.ToolTipIcon.Info);
+        AppendLog(on ? "Desktop mode on." : "Desktop mode off.");
+    }
+
+    private void DesktopModeCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_initialized && !_synchronizing)
+        {
+            SetDesktopMode(DesktopModeCheckBox.IsChecked == true);
+        }
+    }
+
     private void StartupCheckBox_Changed(object sender, RoutedEventArgs e)
     {
         if (!_initialized)
