@@ -14,7 +14,8 @@ internal sealed class ClockResampler
 
     public ClockResampler()
     {
-        _resampler.SetMode(true, 0, true, 32, 16);
+        // Longer sinc filter: cleaner highs, less aliasing (cheap on a PC).
+        _resampler.SetMode(true, 0, true, 64, 32);
         _resampler.SetRates(51200, 48000);
         _resampler.SetFeedMode(true);
     }

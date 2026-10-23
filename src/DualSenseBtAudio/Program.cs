@@ -322,14 +322,22 @@ internal sealed class DualSenseAudioEngine : IDisposable
         _encoder = new OpusEncoder(
             ProtocolConstants.SampleRate,
             ProtocolConstants.Channels,
-            // Low-delay mode (as DS5Dongle) skips Opus look-ahead.
-            OpusPredefinedValues.OPUS_APPLICATION_RESTRICTED_LOWDELAY);
+            // Best quality by default; Low latency mode skips Opus look-ahead (~2.5 ms).
+            LowLatency
+                ? OpusPredefinedValues.OPUS_APPLICATION_RESTRICTED_LOWDELAY
+                : OpusPredefinedValues.OPUS_APPLICATION_AUDIO);
 
         _encoder.SetExpertFrameDuration(
             OpusPredefinedValues.OPUS_FRAMESIZE_10_MS);
+        // The DualSense takes fixed 200-byte packets every 10 ms = 160 kbps, the maximum
+        // the controller accepts. Spend it as well as possible:
         _encoder.SetBitRate(
             ProtocolConstants.OpusPacketBytes * 8 * 100);
         _encoder.SetVbr(false);
+        _encoder.SetComplexity(10);                                          // best encoder search
+        _encoder.SetSignal(OpusPredefinedValues.OPUS_SIGNAL_MUSIC);          // tuned for music/games, not just voice
+        _encoder.SetBandwidth(OpusPredefinedValues.OPUS_BANDWIDTH_FULLBAND); // keep full 20 kHz highs
+        _encoder.SetLsbDepth(24);                                            // input is high-resolution float
 
         Console.WriteLine("HID controller opened.");
         Console.WriteLine($"Protocol: {_options.Protocol}");
@@ -669,6 +677,18 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 EchoCanceller.AddPlayback(inputSamples);
 
                 MicBridge.MixSidetone(inputSamples);
+
+                // Soft limiter: loud game moments round off smoothly above -1 dB instead of
+                // hard-clipping (which sounds harsh after Opus). Quieter audio is untouched.
+                for (int i = 0; i < inputSamples.Length; i++)
+                {
+                    float v = inputSamples[i];
+                    float a = MathF.Abs(v);
+                    if (a > 0.89f)
+                    {
+                        inputSamples[i] = MathF.Sign(v) * (0.89f + 0.11f * MathF.Tanh((a - 0.89f) / 0.11f));
+                    }
+                }
                 _lastInputWindow = inputSamples;
                 _clockResampler.Process(
                     inputSamples,

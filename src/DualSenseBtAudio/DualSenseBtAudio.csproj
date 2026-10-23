@@ -6,10 +6,10 @@
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU</Platforms>
     <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
-    <Version>1.0.6</Version>
-    <AssemblyVersion>1.0.6.0</AssemblyVersion>
-    <FileVersion>1.0.6.0</FileVersion>
-    <InformationalVersion>1.0.6</InformationalVersion>
+    <Version>1.0.7</Version>
+    <AssemblyVersion>1.0.7.0</AssemblyVersion>
+    <FileVersion>1.0.7.0</FileVersion>
+    <InformationalVersion>1.0.7</InformationalVersion>
     <Product>DualSense Bluetooth Audio</Product>
     <Authors>DualSense Bluetooth Audio contributors</Authors>
     <Description>Bluetooth audio engine and HID protocol implementation for DualSense.</Description>

@@ -3,7 +3,7 @@
 ; drivers (VB-CABLE, Hi-Fi Cable, ViGEmBus, HidHide) and name the audio devices.
 
 #define AppName "DualSense Studio"
-#define AppVersion "1.0.6"
+#define AppVersion "1.0.7"
 #define AppExe "DualSenseAudioStudio.exe"
 
 [Setup]
