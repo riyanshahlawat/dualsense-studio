@@ -28,6 +28,10 @@ internal sealed class GamepadBridge : IDisposable
 
     public event Action<string>? NavPressed;
 
+    // One HID reader per controller: Player 1's raw reports are shared with the
+    // live view (Home and Controller page) instead of each opening its own reader.
+    public static event Action<byte[]>? SharedReport;
+
     // Stale reports skipped because newer input was already waiting (lag that was avoided).
     public long SkippedReports { get; private set; }
     private int _lastRumble;
@@ -101,6 +105,12 @@ internal sealed class GamepadBridge : IDisposable
                             latest = next.ToArray();
                             SkippedReports++;
                         }
+                    }
+
+                    // Share Player 1's newest report so the live view doesn't need its own reader.
+                    if (Player == 1)
+                    {
+                        SharedReport?.Invoke(latest);
                     }
 
                     ReadOnlySpan<byte> d = latest;

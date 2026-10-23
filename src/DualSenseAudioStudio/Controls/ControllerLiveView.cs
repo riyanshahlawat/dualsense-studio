@@ -129,6 +129,7 @@ internal sealed class ControllerLiveView : Border
     {
         if (_running) return;
         _running = true;
+        Services.GamepadBridge.SharedReport += OnSharedReport;
         new Thread(ReadLoop) { IsBackground = true, Name = "ControllerLiveView" }.Start();
         _timer.Start();
     }
@@ -136,17 +137,37 @@ internal sealed class ControllerLiveView : Border
     private void Stop()
     {
         _running = false;
+        Services.GamepadBridge.SharedReport -= OnSharedReport;
         _timer.Stop();
     }
 
+    // Normally the game-controller bridge already reads the controller; reuse its reports.
+    private DateTime _lastShared = DateTime.MinValue;
+
+    private void OnSharedReport(byte[] report)
+    {
+        _lastShared = DateTime.UtcNow;
+        Parse(report);
+    }
+
+    private bool SharedFeedActive => (DateTime.UtcNow - _lastShared).TotalMilliseconds < 500;
+
+    // Fallback reader: only opens its own connection when there is no shared feed
+    // (game controller switched off), and closes it again as soon as one appears.
     private void ReadLoop()
     {
         while (_running)
         {
+            if (SharedFeedActive)
+            {
+                Thread.Sleep(250);
+                continue;
+            }
+
             try
             {
                 using var device = new Device(VendorId, ProductId);
-                while (_running)
+                while (_running && !SharedFeedActive)
                 {
                     ReadOnlySpan<byte> data = device.ReadTimeout(547, 100);
                     if (data.Length > 0)
