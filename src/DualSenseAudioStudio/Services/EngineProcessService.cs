@@ -169,7 +169,8 @@ internal sealed class EngineProcessService : IDisposable
                 break;
         }
 
-        startInfo.ArgumentList.Add(options.Full39 ? "--full39" : "--legacy35");
+        // Always the smooth single-packet mode; Full39 (double packets) stutters over Bluetooth.
+        startInfo.ArgumentList.Add("--legacy35");
         startInfo.ArgumentList.Add(options.UseHeadset ? "--headset" : "--speaker");
 
         AddValue(startInfo, "--volume", options.Volume);
@@ -180,7 +181,7 @@ internal sealed class EngineProcessService : IDisposable
             startInfo.ArgumentList.Add("--low-latency");
         }
         // Legacy35 carries one 512-frame window per report, so it must be sent every 10.67 ms.
-        AddValue(startInfo, "--period", options.Full39 ? options.PeriodMs : 10.666667);
+        AddValue(startInfo, "--period", 10.666667);
         AddValue(startInfo, "--led", options.LedHex.TrimStart('#').ToUpperInvariant());
         AddValue(startInfo, "--led-brightness", options.LedBrightness);
         AddValue(startInfo, "--player-leds", options.PlayerLeds);

@@ -429,7 +429,7 @@
                     </Border>
                     <TextBlock Text="DUALSENSE STUDIO" Foreground="{StaticResource TextBrush}" FontWeight="Bold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" />
                     <Border Background="#0059B2" CornerRadius="7" Padding="7,3" Margin="9,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.0.12" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
+                        <TextBlock Text="v1.0.13" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
                     </Border>
                 </StackPanel>
 
@@ -1200,8 +1200,7 @@
                                         <TextBlock Text="Protocol" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold" />
                                         <TextBlock Text="Report mode" Style="{StaticResource LabelStyle}" Margin="0,20,0,8" />
                                         <ComboBox x:Name="ProtocolCombo" SelectionChanged="AdvancedOption_Changed">
-                                            <ComboBoxItem Content="Full39 · recommended" Tag="Full39" IsSelected="True" />
-                                            <ComboBoxItem Content="Legacy35 · comparison" Tag="Legacy35" />
+                                            <ComboBoxItem Content="Legacy35 · smooth (recommended)" Tag="Legacy35" IsSelected="True" />
                                         </ComboBox>
 
                                         <Grid Margin="0,22,0,0">
