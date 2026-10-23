@@ -52,36 +52,6 @@ internal sealed class MicBridge : IDisposable
         }
     }
 
-    // Noise removal: 100 Hz high-pass (hum/rumble) + a soft noise gate that
-    // follows the background level, so fans and keys don't get through.
-    private float _hpPrevIn, _hpPrevOut, _noiseFloor = 0.01f, _gate;
-
-    private void CleanUp(short[] pcm, int count)
-    {
-        const float hp = 0.987f;
-        float energy = 0;
-        var buffer = new float[count];
-        for (int i = 0; i < count; i++)
-        {
-            float x = pcm[i] / 32768f;
-            float y = hp * (_hpPrevOut + x - _hpPrevIn);
-            _hpPrevIn = x;
-            _hpPrevOut = y;
-            buffer[i] = y;
-            energy += y * y;
-        }
-
-        float rms = MathF.Sqrt(energy / Math.Max(1, count));
-        // Floor tracks slowly upward and quickly downward.
-        _noiseFloor = rms < _noiseFloor ? rms : _noiseFloor + (rms - _noiseFloor) * 0.002f;
-        float target = rms > _noiseFloor * 2.2f + 0.0015f ? 1f : 0f; // gentler gate: keeps soft word endings
-        for (int i = 0; i < count; i++)
-        {
-            _gate += (target - _gate) * (target > _gate ? 0.05f : 0.002f);
-            pcm[i] = (short)Math.Clamp(buffer[i] * _gate * 32767f, -32768f, 32767f);
-        }
-    }
-
     private const int OpusSize = 71;
     private const int FrameSamples = 480;
     private const string DefaultTargetName = "Hi-Fi Cable";
@@ -97,7 +67,10 @@ internal sealed class MicBridge : IDisposable
     private long _frames;
     private long _decodeErrors;
     private int _peak;
-    private bool _muted;
+    // Mic mute from the controller button; static so the audio engine's state
+    // reports keep the mute LED and mic mute in sync.
+    public static volatile bool Muted;
+    private bool _muted { get => Muted; set => Muted = value; }
     private bool _mutePressed;
 
     private MicBridge(string targetName)
@@ -126,6 +99,9 @@ internal sealed class MicBridge : IDisposable
     {
         var bridge = new MicBridge(targetName ?? DefaultTargetName);
         EchoCanceller.Start(NoiseRemoval);
+        // The controller may still be muted from a previous session: start in sync (unmuted).
+        Muted = false;
+        bridge.SendMuteState();
         bridge._output.Play();
         bridge._thread.Start();
         Console.WriteLine($"Mic: DualSense mic -> \"{bridge._target.FriendlyName}\".");
@@ -175,6 +151,7 @@ internal sealed class MicBridge : IDisposable
                 {
                     _muted = !_muted;
                     SendMuteState();
+                    _lastFrameAt = 0; // the muted stretch is not packet loss
                     Console.WriteLine(_muted ? "Mic: muted (controller button)." : "Mic: unmuted (controller button).");
                 }
                 _mutePressed = pressed;

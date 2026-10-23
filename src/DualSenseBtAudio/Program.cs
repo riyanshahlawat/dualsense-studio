@@ -921,9 +921,10 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
         // Without lighting control, preserve the original V5.5 audio flags and
         // do not declare lightbar or Player LEDs as valid fields.
+        // + 0x01: mute LED, so every state report keeps the LED matching the mic mute.
         report[state + 1] = _options.AppControlsLighting
-            ? (byte)0x96
-            : (byte)0x82;
+            ? (byte)0x97
+            : (byte)0x83;
 
         report[state + 4] = _controllerState.Volume;
         report[state + 5] = _controllerState.Volume;
@@ -936,8 +937,10 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 ? (byte)0x20
                 : (byte)0x00;
 
-        // MuteControl: all unmuted.
-        report[state + 9] = 0x00;
+        // Mic mute (power-save bit 0x10) and mute LED follow the controller's mute
+        // button, so volume/lighting updates never silently unmute or mis-light it.
+        report[state + 8] = MicBridge.Muted ? (byte)1 : (byte)0;
+        report[state + 9] = MicBridge.Muted ? (byte)0x10 : (byte)0x00;
 
         // AudioControl2: modest speaker pre-gain.
         report[state + 37] = 0x03;
