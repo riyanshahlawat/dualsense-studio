@@ -348,7 +348,7 @@ public partial class MainWindow
                 .Where(p => p.Length == 2)
                 .ToDictionary(p => p[0], p => p[1] == "1");
             NoiseRemovalCheckBox.IsChecked = prefs.GetValueOrDefault("noise", true);
-            SidetoneCheckBox.IsChecked = prefs.GetValueOrDefault("sidetone", false);
+            SidetoneCheckBox.IsChecked = false;
             HapticsCheckBox.IsChecked = prefs.GetValueOrDefault("haptics", false);
             BatteryLightCheckBox.IsChecked = prefs.GetValueOrDefault("batterylight", false);
             LowLatencyCheckBox.IsChecked = prefs.GetValueOrDefault("lowlatency", false);

@@ -697,9 +697,10 @@ internal sealed class DualSenseAudioEngine : IDisposable
                     playEnergy += inputSamples[i] * inputSamples[i];
                 }
                 MicBridge.PlaybackLevel = MathF.Sqrt(playEnergy / Math.Max(1, inputSamples.Length));
-                EchoCanceller.AddPlayback(inputSamples);
-
+                // Sidetone (hear myself) goes in BEFORE the echo reference, so the echo
+                // canceller also removes your own voice leaking back into the mic.
                 MicBridge.MixSidetone(inputSamples);
+                EchoCanceller.AddPlayback(inputSamples);
 
                 // Soft limiter: loud game moments round off smoothly above -1 dB instead of
                 // hard-clipping (which sounds harsh after Opus). Quieter audio is untouched.
@@ -926,7 +927,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
         report[state + 4] = _controllerState.Volume;
         report[state + 5] = _controllerState.Volume;
-        report[state + 6] = 0x24; // mic gain: louder voice; MicBridge soft-limits peaks
+        report[state + 6] = 0x1C; // mic gain: louder voice; MicBridge soft-limits peaks
 
         // AudioControl:
         // Headset uses OutputPathSelect 2 (bits 4-5); speaker uses 0.

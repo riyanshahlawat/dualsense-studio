@@ -269,7 +269,8 @@ public partial class MainWindow : Window
                 AppControlsLighting = settings.AppControlsLighting,
                 EnableMic = MicEnabledCheckBox.IsChecked == true,
                 NoiseRemoval = NoiseRemovalCheckBox.IsChecked == true,
-                Sidetone = SidetoneCheckBox.IsChecked == true,
+                // Hear-myself removed: over Bluetooth it returns ~300 ms late (sounds like echo).
+                Sidetone = false,
                 Haptics = HapticsCheckBox.IsChecked == true,
                 LowLatency = LowLatencyCheckBox.IsChecked == true,
                 ControlFile = _controlFile.FilePath

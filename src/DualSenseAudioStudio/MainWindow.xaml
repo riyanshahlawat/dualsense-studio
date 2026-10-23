@@ -429,7 +429,7 @@
                     </Border>
                     <TextBlock Text="DUALSENSE STUDIO" Foreground="{StaticResource TextBrush}" FontWeight="Bold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" />
                     <Border Background="#0059B2" CornerRadius="7" Padding="7,3" Margin="9,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.0.9" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
+                        <TextBlock Text="v1.0.11" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
                     </Border>
                 </StackPanel>
 
@@ -674,7 +674,7 @@
                                             <StackPanel Orientation="Horizontal" Margin="26,8,0,0">
                                                 <CheckBox x:Name="NoiseRemovalCheckBox" Content="Noise removal" IsChecked="True" Margin="0,0,18,0"
                                                           Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Filters fan/keyboard hum and silences the mic when you're not talking." />
-                                                <CheckBox x:Name="SidetoneCheckBox" Content="Hear myself" IsChecked="False"
+                                                <CheckBox x:Name="SidetoneCheckBox" Visibility="Collapsed" Content="Hear myself" IsChecked="False"
                                                           Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Sidetone: plays your own voice quietly in the headphones, like a PS5 headset." />
                                             </StackPanel>
                                             <CheckBox x:Name="HapticsCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Haptics from game sound (beta)"
