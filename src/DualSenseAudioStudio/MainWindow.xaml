@@ -674,9 +674,6 @@
                                             </StackPanel>
                                             <CheckBox x:Name="HapticsCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Haptics from game sound (beta)"
                                                       Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Feel game audio (bass, explosions) in the DualSense haptic motors." />
-                                            <CheckBox x:Name="DesktopModeCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Desktop mode: control Windows (PS + Options)"
-                                                      Checked="DesktopModeCheckBox_Changed" Unchecked="DesktopModeCheckBox_Changed"
-                                                      ToolTip="Right stick = mouse, ✕/R2 = click, □/L2 = right-click, left stick = scroll, D-pad = arrows, ○ = Esc, R3 = Enter, L3 = Backspace, L1/R1 = tabs, Options = Start, Create = Task View, △ = keyboard." />
                                             <CheckBox x:Name="BatteryLightCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Battery-colored light bar"
                                                       ToolTip="Green when charged, yellow when half, red when low. Alerts at 20% and 10%." />
                                             <CheckBox x:Name="StartupCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Start with Windows (in tray)"

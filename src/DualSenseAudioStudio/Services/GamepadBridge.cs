@@ -103,128 +103,15 @@ internal sealed class GamepadBridge : IDisposable
     // s = USB-layout payload: 0 lx, 1 ly, 2 rx, 3 ry, 4 l2, 5 r2, 7..9 buttons.
     private void Submit(ReadOnlySpan<byte> s)
     {
-        if (DesktopMode)
+        if (_ds4 is not null)
         {
-            // Games get a neutral controller while the DualSense drives Windows.
-            Span<byte> neutral = stackalloc byte[Math.Max(s.Length, 10)];
-            neutral[0] = neutral[1] = neutral[2] = neutral[3] = 128;
-            neutral[7] = 0x08; // d-pad released
-            if (_ds4 is not null) SubmitDualShock4(neutral); else SubmitXbox(neutral);
-            Desktop(s);
+            SubmitDualShock4(s);
         }
         else
         {
-            ReleaseDesktopButtons();
-            if (_ds4 is not null) SubmitDualShock4(s); else SubmitXbox(s);
+            SubmitXbox(s);
         }
         AfterSubmit(s);
-    }
-
-    // Desktop mode (shared by all controllers): the DualSense works as mouse + keyboard.
-    public static volatile bool DesktopMode;
-
-    private int _desktopHeld;
-    private double _scrollX, _scrollY, _moveX, _moveY;
-
-    private const ushort VkReturn = 0x0D, VkEscape = 0x1B, VkLeft = 0x25, VkUp = 0x26, VkRight = 0x27, VkDown = 0x28;
-    private const ushort VkTab = 0x09, VkShift = 0x10, VkControl = 0x11, VkWin = 0x5B, VkBack = 0x08;
-
-    private void Desktop(ReadOnlySpan<byte> s)
-    {
-        // Right stick: mouse cursor with a curve (fine near center, fast at the edge).
-        _moveX += Curve(s[2]) * 14;
-        _moveY += Curve(s[3]) * 14;
-        int mx = (int)_moveX, my = (int)_moveY;
-        _moveX -= mx;
-        _moveY -= my;
-        if (mx != 0 || my != 0) NativeInput.MoveMouse(mx, my);
-
-        // Left stick: scroll.
-        _scrollY -= Curve(s[1]) * 6;
-        _scrollX += Curve(s[0]) * 6;
-        int sy = (int)_scrollY, sx = (int)_scrollX;
-        _scrollY -= sy;
-        _scrollX -= sx;
-        if (sy != 0 || sx != 0) NativeInput.Scroll(sy, sx);
-
-        byte b0 = s[7], b1 = s[8];
-        int dpad = b0 & 0x0F;
-        int held = 0;
-        if ((b0 & 0x20) != 0 || s[5] > 100) held |= 1;    // Cross / R2: left click (hold to drag)
-        if ((b0 & 0x10) != 0 || s[4] > 100) held |= 2;    // Square / L2: right click
-        if ((b0 & 0x40) != 0) held |= 4;                  // Circle: Esc
-        if (dpad is 0 or 1 or 7) held |= 8;               // D-pad: arrow keys
-        if (dpad is 3 or 4 or 5) held |= 16;
-        if (dpad is 5 or 6 or 7) held |= 32;
-        if (dpad is 1 or 2 or 3) held |= 64;
-        if ((b1 & 0x01) != 0) held |= 128;                // L1: previous tab (Ctrl+Shift+Tab)
-        if ((b1 & 0x02) != 0) held |= 256;                // R1: next tab (Ctrl+Tab)
-        if ((b1 & 0x20) != 0 && (s[9] & 0x01) == 0) held |= 512;  // Options: Start menu
-        if ((b1 & 0x10) != 0) held |= 1024;               // Create: Task View (Win+Tab)
-        if ((b0 & 0x80) != 0) held |= 2048;               // Triangle: on-screen keyboard
-        if ((b1 & 0x80) != 0) held |= 4096;               // R3: Enter
-        if ((b1 & 0x40) != 0) held |= 8192;               // L3: Backspace
-
-        int pressed = held & ~_desktopHeld;
-        int released = _desktopHeld & ~held;
-        _desktopHeld = held;
-
-        if ((pressed & 1) != 0) NativeInput.LeftButton(true);
-        if ((released & 1) != 0) NativeInput.LeftButton(false);
-        if ((pressed & 2) != 0) NativeInput.RightButton(true);
-        if ((released & 2) != 0) NativeInput.RightButton(false);
-        HoldKey(pressed, released, 4, VkEscape);
-        HoldKey(pressed, released, 8, VkUp);
-        HoldKey(pressed, released, 16, VkDown);
-        HoldKey(pressed, released, 32, VkLeft);
-        HoldKey(pressed, released, 64, VkRight);
-        HoldKey(pressed, released, 4096, VkReturn);
-        HoldKey(pressed, released, 8192, VkBack);
-        if ((pressed & 128) != 0) NativeInput.Tap(VkControl, VkShift, VkTab);
-        if ((pressed & 256) != 0) NativeInput.Tap(VkControl, VkTab);
-        if ((pressed & 512) != 0) NativeInput.Tap(VkWin);
-        if ((pressed & 1024) != 0) NativeInput.Tap(VkWin, VkTab);
-        if ((pressed & 2048) != 0) OpenWindowsKeyboard();
-    }
-
-    private static void HoldKey(int pressed, int released, int bit, ushort key)
-    {
-        if ((pressed & bit) != 0) NativeInput.Key(key, true);
-        if ((released & bit) != 0) NativeInput.Key(key, false);
-    }
-
-    private static double Curve(byte axis)
-    {
-        double v = (axis - 128) / 127.0;
-        double mag = Math.Abs(v);
-        if (mag < 0.12) return 0; // deadzone
-        double scaled = (mag - 0.12) / 0.88;
-        return Math.Sign(v) * scaled * scaled;
-    }
-
-    // Releases anything still held when Desktop mode is switched off.
-    private void ReleaseDesktopButtons()
-    {
-        if (_desktopHeld == 0) return;
-        if ((_desktopHeld & 1) != 0) NativeInput.LeftButton(false);
-        if ((_desktopHeld & 2) != 0) NativeInput.RightButton(false);
-        foreach (var (bit, key) in new[] { (4, VkEscape), (8, VkUp), (16, VkDown), (32, VkLeft), (64, VkRight), (4096, VkReturn), (8192, VkBack) })
-        {
-            if ((_desktopHeld & bit) != 0) NativeInput.Key(key, false);
-        }
-        _desktopHeld = 0;
-    }
-
-    // Windows' own on-screen keyboard, for typing in any app.
-    private static void OpenWindowsKeyboard()
-    {
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("osk.exe") { UseShellExecute = true });
-        }
-        catch
-        {
-        }
     }
 
     private void SubmitDualShock4(ReadOnlySpan<byte> s)
@@ -314,14 +201,12 @@ internal sealed class GamepadBridge : IDisposable
         if ((b1 & 0x02) != 0) nav |= 128;                      // R1
         if ((b0 & 0x10) != 0) nav |= 256;                      // Square
         if ((b0 & 0x80) != 0) nav |= 512;                      // Triangle
-        bool ps = (s[9] & 0x01) != 0;
-        if (ps && (b1 & 0x20) != 0) nav |= 2048;               // PS + Options: Desktop mode on/off
-        else if (ps) nav |= 1024;                              // PS
+        if ((s[9] & 0x01) != 0) nav |= 1024;                   // PS
         int pressed = nav & ~_lastNav;
         _lastNav = nav;
         if (pressed != 0)
         {
-            string[] names = { "Up", "Down", "Left", "Right", "Cross", "Circle", "L1", "R1", "Square", "Triangle", "PS", "DesktopToggle" };
+            string[] names = { "Up", "Down", "Left", "Right", "Cross", "Circle", "L1", "R1", "Square", "Triangle", "PS" };
             for (int i = 0; i < names.Length; i++)
             {
                 if ((pressed & (1 << i)) != 0) NavPressed?.Invoke(names[i]);

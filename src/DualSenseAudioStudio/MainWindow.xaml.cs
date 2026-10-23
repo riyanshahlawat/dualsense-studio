@@ -523,18 +523,6 @@ public partial class MainWindow : Window
     // L1/R1 switch home tiles, D-pad/left stick move focus, Cross selects, Circle goes Home.
     private void HandleControllerNav(string button)
     {
-        if (button == "DesktopToggle")
-        {
-            SetDesktopMode(!GamepadBridge.DesktopMode);
-            return;
-        }
-
-        // In Desktop mode the controller drives Windows directly; don't also navigate the app.
-        if (GamepadBridge.DesktopMode && button != "PS")
-        {
-            return;
-        }
-
         // PS button: bring DualSense Studio to the front on Home, from anywhere (like a PS5).
         if (button == "PS")
         {
@@ -558,11 +546,6 @@ public partial class MainWindow : Window
         }
 
         _controllerNavActive = true;
-        if (HandleKeyboardNav(button))
-        {
-            return;
-        }
-
         Button[] tiles = HomeTiles;
         int index = Array.FindIndex(tiles, t => Equals(t.Tag, _currentPage));
         IInputElement? focused = Keyboard.FocusedElement;
@@ -613,9 +596,6 @@ public partial class MainWindow : Window
                         break;
                     case CheckBox c:
                         c.IsChecked = c.IsChecked != true;
-                        break;
-                    case TextBox textBox when !textBox.IsReadOnly:
-                        OpenKeyboard(textBox);
                         break;
                     case RadioButton r:
                         r.IsChecked = true;
