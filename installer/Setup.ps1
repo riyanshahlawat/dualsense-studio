@@ -3,10 +3,12 @@
 # "DualSense Wireless Controller", hides the real controller from games, and adds
 # shortcuts. Run Setup.cmd (it asks for administrator approval once).
 #Requires -RunAsAdministrator
+# -DriversOnly -AppDir <dir>: used by DualSenseStudio-Setup.exe, which installs the app files itself.
+param([switch]$DriversOnly, [string]$AppDir)
 $ErrorActionPreference = 'Stop'
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$appDir = Join-Path $env:LOCALAPPDATA 'Programs\DualSenseBtAudio'
+$appDir = if ($AppDir) { $AppDir } else { Join-Path $env:LOCALAPPDATA 'Programs\DualSenseBtAudio' }
 $tmp = Join-Path $env:TEMP 'dualsense-studio-setup'
 New-Item -ItemType Directory -Force $tmp | Out-Null
 
@@ -62,11 +64,13 @@ if (-not (Test-Path $hidHideCli)) {
     Start-Process $exe -Wait
 }
 
-# 5. Install the app
-Write-Host 'Installing DualSense Studio...'
-Get-Process DualSenseAudioStudio, DualSenseBtAudio -ErrorAction SilentlyContinue | Stop-Process -Force
-New-Item -ItemType Directory -Force $appDir | Out-Null
-Copy-Item (Join-Path $here 'app\*') $appDir -Recurse -Force
+# 5. Install the app (Setup.exe already copied the files)
+if (-not $DriversOnly) {
+    Write-Host 'Installing DualSense Studio...'
+    Get-Process DualSenseAudioStudio, DualSenseBtAudio -ErrorAction SilentlyContinue | Stop-Process -Force
+    New-Item -ItemType Directory -Force $appDir | Out-Null
+    Copy-Item (Join-Path $here 'app\*') $appDir -Recurse -Force
+}
 
 # 6. Name the audio devices like a real headset and hide unused cable endpoints
 & (Join-Path $appDir 'DualSenseBtAudio.exe') --setup-devices
@@ -78,6 +82,11 @@ if (Test-Path $hidHideCli) {
     Get-PnpDevice | Where-Object InstanceId -match '(BTHENUM|HID|USB)\\.*VID(&0002)?_?054C.*PID_0CE6' |
         ForEach-Object { & $hidHideCli --dev-hide $_.InstanceId | Out-Null }
     & $hidHideCli --cloak-on | Out-Null
+}
+
+if ($DriversOnly) {
+    Write-Host 'Drivers and devices are ready.' -ForegroundColor Green
+    return
 }
 
 # 8. Shortcuts: desktop + start with Windows (tray)

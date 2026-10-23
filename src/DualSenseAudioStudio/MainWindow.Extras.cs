@@ -53,6 +53,48 @@ public partial class MainWindow
         {
             Hide();
         }
+
+        _ = CheckForUpdateAsync();
+    }
+
+    private Services.UpdateChecker.UpdateInfo? _update;
+
+    // Auto-update: check GitHub shortly after start, then show a button + tray note.
+    private async Task CheckForUpdateAsync()
+    {
+        await Task.Delay(TimeSpan.FromSeconds(8));
+        _update = await Services.UpdateChecker.CheckAsync();
+        if (_update is null)
+        {
+            return;
+        }
+
+        UpdateButtonText.Text = $"Update to v{_update.Version}";
+        UpdateButton.Visibility = Visibility.Visible;
+        AppendLog($"Update available: v{_update.Version}.");
+        _tray?.ShowBalloonTip(4000, "DualSense Studio update", $"Version {_update.Version} is available. Open the app and click Update.", Forms.ToolTipIcon.Info);
+    }
+
+    private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_update is null)
+        {
+            return;
+        }
+
+        UpdateButton.IsEnabled = false;
+        UpdateButtonText.Text = "Downloading…";
+        try
+        {
+            await Services.UpdateChecker.InstallAsync(_update);
+            ExitApp();
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Update failed: {ex.Message}");
+            UpdateButtonText.Text = "Update failed – retry";
+            UpdateButton.IsEnabled = true;
+        }
     }
 
     private void ShowFromTray()
