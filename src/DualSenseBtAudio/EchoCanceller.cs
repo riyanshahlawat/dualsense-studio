@@ -292,7 +292,11 @@ internal static class EchoCanceller
                     }
                 }
 
-                if (bestLag < 0 || best < 0.3)
+                if (bestLag >= 0)
+                {
+                    Console.WriteLine($"Mic: echo search best {bestLag * Decimate / 48} ms, match {best:0.00}.");
+                }
+                if (bestLag < 0 || best < 0.2)
                 {
                     return; // no clear echo right now (silence or you talking)
                 }

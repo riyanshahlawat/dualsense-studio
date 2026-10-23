@@ -17,6 +17,9 @@ internal sealed class MicBridge : IDisposable
     // Loudness of what's playing in the headphones (set by the audio engine), for echo reduction.
     public static volatile float PlaybackLevel;
     private float _duck = 1f;
+    private float _leakRatio = 1f;
+    private readonly float[] _playHistory = new float[64];
+    private int _playIndex;
     private double _lastFrameAt;
     private long _concealed;
 
@@ -255,8 +258,25 @@ internal sealed class MicBridge : IDisposable
                 micEnergy += x * x;
             }
             float micRms = MathF.Sqrt(micEnergy / Math.Max(1, decoded));
-            float playing = PlaybackLevel;
-            float duckTarget = playing > 0.015f && micRms < playing * 0.5f ? 0.4f : 1f; // gentle: the echo canceller does the main work
+            // The echo comes back ~300 ms late over Bluetooth, so compare with how loud the
+            // headphones were 150-450 ms ago (history of 10 ms steps), not right now.
+            _playHistory[_playIndex++ % _playHistory.Length] = PlaybackLevel;
+            float playing = 0;
+            for (int back = 15; back <= 45; back++)
+            {
+                playing = Math.Max(playing, _playHistory[(_playIndex - back + _playHistory.Length * 10) % _playHistory.Length]);
+            }
+            // Learn how loud the headphone leak is in the mic (the lowest mic/headphone
+            // ratio seen while friends talk = pure leak). Then, while they talk, only
+            // let the mic through when it's clearly louder than that leak (you talking).
+            float duckTarget = 1f;
+            if (playing > 0.01f)
+            {
+                float ratio = micRms / playing;
+                _leakRatio = ratio < _leakRatio ? ratio : _leakRatio + (ratio - _leakRatio) * 0.0005f;
+                bool youAreTalking = micRms > Math.Max(_leakRatio * playing * 4f, 0.004f);
+                duckTarget = youAreTalking ? 1f : 0.06f;
+            }
 
             for (int i = 0; i < decoded; i++)
             {

@@ -322,6 +322,22 @@ public partial class MainWindow
         _fastTimer = want;
     }
 
+    // Touchpad speed: applies instantly and is remembered.
+    private void TouchpadSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (TouchpadSpeedText is null)
+        {
+            return; // still loading
+        }
+
+        Services.TouchpadMouse.Sensitivity = (float)TouchpadSpeedSlider.Value;
+        TouchpadSpeedText.Text = $"{TouchpadSpeedSlider.Value:0.0}×";
+        if (_initialized)
+        {
+            SavePrefs();
+        }
+    }
+
     private void MicOption_Changed(object sender, RoutedEventArgs e)
     {
         ApplyLowLatencyTimer();
@@ -352,6 +368,12 @@ public partial class MainWindow
             HapticsCheckBox.IsChecked = prefs.GetValueOrDefault("haptics", false);
             BatteryLightCheckBox.IsChecked = prefs.GetValueOrDefault("batterylight", false);
             LowLatencyCheckBox.IsChecked = prefs.GetValueOrDefault("lowlatency", false);
+
+            string? speed = File.ReadAllLines(PrefsFile).FirstOrDefault(l => l.StartsWith("touchspeed=", StringComparison.Ordinal));
+            if (speed is not null && double.TryParse(speed[11..], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double value))
+            {
+                TouchpadSpeedSlider.Value = Math.Clamp(value, 0.3, 3);
+            }
         }
         catch
         {
@@ -369,7 +391,8 @@ public partial class MainWindow
                 $"sidetone={(SidetoneCheckBox.IsChecked == true ? 1 : 0)}",
                 $"haptics={(HapticsCheckBox.IsChecked == true ? 1 : 0)}",
                 $"batterylight={(BatteryLightCheckBox.IsChecked == true ? 1 : 0)}",
-                $"lowlatency={(LowLatencyCheckBox.IsChecked == true ? 1 : 0)}"
+                $"lowlatency={(LowLatencyCheckBox.IsChecked == true ? 1 : 0)}",
+                $"touchspeed={TouchpadSpeedSlider.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}"
             });
         }
         catch

@@ -429,7 +429,7 @@
                     </Border>
                     <TextBlock Text="DUALSENSE STUDIO" Foreground="{StaticResource TextBrush}" FontWeight="Bold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" />
                     <Border Background="#0059B2" CornerRadius="7" Padding="7,3" Margin="9,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.0.11" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
+                        <TextBlock Text="v1.0.12" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
                     </Border>
                 </StackPanel>
 
@@ -661,6 +661,16 @@
                                                       Checked="GameControllerCheckBox_Changed" Unchecked="GameControllerCheckBox_Changed"
                                                       Content="Game controller (touchpad = mouse)"
                                                       ToolTip="Uses ViGEmBus. Works without starting audio. Game rumble goes to the DualSense." />
+                                            <Grid Margin="26,8,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="44" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Touchpad speed" Foreground="#A7ADB9" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                                <Slider x:Name="TouchpadSpeedSlider" Grid.Column="1" Minimum="0.3" Maximum="3" Value="1" ValueChanged="TouchpadSpeedSlider_ValueChanged" />
+                                                <TextBlock x:Name="TouchpadSpeedText" Grid.Column="2" Text="1.0×" Foreground="#D6DDE8" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                            </Grid>
                                             <StackPanel Orientation="Horizontal" Margin="26,8,0,0">
                                                 <TextBlock Text="Games see:" Foreground="#A7ADB9" VerticalAlignment="Center" Margin="0,0,12,0" />
                                                 <RadioButton x:Name="EmulateXboxRadio" GroupName="Emulation" Content="Xbox" Foreground="#D6DDE8" IsChecked="True" Checked="EmulationMode_Checked" Margin="0,0,16,0" />

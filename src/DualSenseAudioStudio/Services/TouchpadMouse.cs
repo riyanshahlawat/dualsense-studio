@@ -16,6 +16,9 @@ internal sealed class TouchpadMouse
     private const double JitterDeadzone = 1.2; // touch units per report ignored as noise
     private const int SettleReports = 2;       // reports ignored after a finger lands
     private const double ScrollGain = 2.2;     // wheel units per touch unit (120 = one notch)
+
+    // User sensitivity from the app (1.0 = default; 0.3 slow .. 3.0 fast). Shared by all controllers.
+    public static volatile float Sensitivity = 1f;
     private const double ScrollFriction = 0.93;
 
     public int LastX { get; private set; }
@@ -114,7 +117,7 @@ internal sealed class TouchpadMouse
             _moved = true;
         }
 
-        double gain = Math.Min(MaxGain, BaseGain + speed * AccelGain);
+        double gain = Math.Min(MaxGain, BaseGain + speed * AccelGain) * Sensitivity;
 
         // Apply the previous report's movement now; keep this one pending, so if the
         // finger lifts next report its lift-off jump is thrown away.
@@ -182,8 +185,8 @@ internal sealed class TouchpadMouse
         }
 
         // Natural scrolling: content follows the fingers (like a Mac).
-        _scrollVy = _scrollVy * 0.5 + dy * ScrollGain * 0.5;
-        _scrollVx = _scrollVx * 0.5 + -dx * ScrollGain * 0.5;
+        _scrollVy = _scrollVy * 0.5 + dy * ScrollGain * Sensitivity * 0.5;
+        _scrollVx = _scrollVx * 0.5 + -dx * ScrollGain * Sensitivity * 0.5;
         EmitScroll(_scrollVy, _scrollVx);
     }
 
