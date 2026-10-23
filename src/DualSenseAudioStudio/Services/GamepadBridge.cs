@@ -59,7 +59,7 @@ internal sealed class GamepadBridge : IDisposable
             _pad.FeedbackReceived += (_, e) => SendRumble(e.LargeMotor, e.SmallMotor);
             _pad.Connect();
         }
-        _thread = new Thread(Run) { IsBackground = true, Name = "GamepadBridge", Priority = ThreadPriority.AboveNormal };
+        _thread = new Thread(Run) { IsBackground = true, Name = "GamepadBridge", Priority = ThreadPriority.Highest };
         _thread.Start();
     }
 

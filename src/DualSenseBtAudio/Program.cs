@@ -70,7 +70,8 @@ internal static class Program
             MicBridge.NoiseRemoval = args.Contains("--noise-removal", StringComparer.OrdinalIgnoreCase);
             MicBridge.Sidetone = args.Contains("--sidetone", StringComparer.OrdinalIgnoreCase);
             Haptics.Enabled = args.Contains("--haptics", StringComparer.OrdinalIgnoreCase);
-            string[] appFlags = { "--mic", "--noise-removal", "--sidetone", "--haptics" };
+            DualSenseAudioEngine.LowLatency = args.Contains("--low-latency", StringComparer.OrdinalIgnoreCase);
+            string[] appFlags = { "--mic", "--noise-removal", "--sidetone", "--haptics", "--low-latency" };
             args = args.Where(a => !appFlags.Contains(a, StringComparer.OrdinalIgnoreCase)).ToArray();
 
             Options options = Options.Parse(args);
@@ -250,6 +251,9 @@ internal sealed class DualSenseAudioEngine : IDisposable
         new byte[ProtocolConstants.OpusPacketBytes];
 
     private readonly ClockResampler _clockResampler = new();
+
+    // Low latency mode: smaller PC-side audio buffers (set from --low-latency).
+    public static bool LowLatency;
 
     private long _hidWriteCount;
     private long _hidWriteTicksTotal;
@@ -476,9 +480,9 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 outputFramesPerReport *
                 ProtocolConstants.Channels;
 
-            // Lowered from 170/380 ms to cut headphone delay.
-            const int targetBufferMs = 60;
-            const int maximumBufferMs = 140;
+            // Lowered from 170/380 ms to cut headphone delay; Low latency mode halves it again.
+            int targetBufferMs = LowLatency ? 34 : 60;
+            int maximumBufferMs = LowLatency ? 80 : 140;
 
             int targetBufferSamples =
                 ProtocolConstants.SampleRate *

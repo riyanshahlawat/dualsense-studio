@@ -215,7 +215,7 @@ internal sealed class MicBridge : IDisposable
                     stereo[o + 3] = (byte)(s >> 8);
                 }
                 // Controller and PC clocks drift; drop backlog to keep mic delay low.
-                if (_buffer.BufferedDuration.TotalMilliseconds > 40)
+                if (_buffer.BufferedDuration.TotalMilliseconds > (DualSenseAudioEngine.LowLatency ? 20 : 40))
                 {
                     _buffer.ClearBuffer();
                 }

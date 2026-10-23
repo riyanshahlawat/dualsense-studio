@@ -54,6 +54,7 @@ internal sealed record EngineLaunchOptions
     public bool NoiseRemoval { get; init; }
     public bool Sidetone { get; init; }
     public bool Haptics { get; init; }
+    public bool LowLatency { get; init; }
     public required string ControlFile { get; init; }
 }
 

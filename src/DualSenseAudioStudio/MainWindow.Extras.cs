@@ -148,8 +148,26 @@ public partial class MainWindow
         return key?.GetValue(RunName) is not null;
     }
 
+    [System.Runtime.InteropServices.DllImport("winmm.dll")]
+    private static extern uint timeBeginPeriod(uint period);
+
+    [System.Runtime.InteropServices.DllImport("winmm.dll")]
+    private static extern uint timeEndPeriod(uint period);
+
+    private bool _fastTimer;
+
+    // Low latency: 1 ms Windows timer so controller input and UI timers wake on time.
+    private void ApplyLowLatencyTimer()
+    {
+        bool want = LowLatencyCheckBox.IsChecked == true;
+        if (want == _fastTimer) return;
+        if (want) timeBeginPeriod(1); else timeEndPeriod(1);
+        _fastTimer = want;
+    }
+
     private void MicOption_Changed(object sender, RoutedEventArgs e)
     {
+        ApplyLowLatencyTimer();
         if (!_initialized)
         {
             return;
@@ -176,6 +194,7 @@ public partial class MainWindow
             SidetoneCheckBox.IsChecked = prefs.GetValueOrDefault("sidetone", false);
             HapticsCheckBox.IsChecked = prefs.GetValueOrDefault("haptics", false);
             BatteryLightCheckBox.IsChecked = prefs.GetValueOrDefault("batterylight", false);
+            LowLatencyCheckBox.IsChecked = prefs.GetValueOrDefault("lowlatency", false);
         }
         catch
         {
@@ -192,7 +211,8 @@ public partial class MainWindow
                 $"noise={(NoiseRemovalCheckBox.IsChecked == true ? 1 : 0)}",
                 $"sidetone={(SidetoneCheckBox.IsChecked == true ? 1 : 0)}",
                 $"haptics={(HapticsCheckBox.IsChecked == true ? 1 : 0)}",
-                $"batterylight={(BatteryLightCheckBox.IsChecked == true ? 1 : 0)}"
+                $"batterylight={(BatteryLightCheckBox.IsChecked == true ? 1 : 0)}",
+                $"lowlatency={(LowLatencyCheckBox.IsChecked == true ? 1 : 0)}"
             });
         }
         catch

@@ -173,7 +173,12 @@ internal sealed class EngineProcessService : IDisposable
         startInfo.ArgumentList.Add(options.UseHeadset ? "--headset" : "--speaker");
 
         AddValue(startInfo, "--volume", options.Volume);
-        AddValue(startInfo, "--buffer", options.BufferLength);
+        // Low latency: smaller controller-side jitter buffer too.
+        AddValue(startInfo, "--buffer", options.LowLatency ? Math.Min(options.BufferLength, 36) : options.BufferLength);
+        if (options.LowLatency)
+        {
+            startInfo.ArgumentList.Add("--low-latency");
+        }
         // Legacy35 carries one 512-frame window per report, so it must be sent every 10.67 ms.
         AddValue(startInfo, "--period", options.Full39 ? options.PeriodMs : 10.666667);
         AddValue(startInfo, "--led", options.LedHex.TrimStart('#').ToUpperInvariant());

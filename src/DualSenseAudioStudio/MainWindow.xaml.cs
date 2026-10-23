@@ -271,6 +271,7 @@ public partial class MainWindow : Window
                 NoiseRemoval = NoiseRemovalCheckBox.IsChecked == true,
                 Sidetone = SidetoneCheckBox.IsChecked == true,
                 Haptics = HapticsCheckBox.IsChecked == true,
+                LowLatency = LowLatencyCheckBox.IsChecked == true,
                 ControlFile = _controlFile.FilePath
             };
 
@@ -523,20 +524,22 @@ public partial class MainWindow : Window
     // L1/R1 switch home tiles, D-pad/left stick move focus, Cross selects, Circle goes Home.
     private void HandleControllerNav(string button)
     {
-        // PS button: bring DualSense Studio to the front on Home, from anywhere (like a PS5).
+        // PS button: show the desktop (minimize all); press again to bring windows back (Win+D).
         if (button == "PS")
         {
-            Show();
-            if (WindowState == WindowState.Minimized)
+            try
             {
-                WindowState = WindowState.Normal;
+                Type? shellType = Type.GetTypeFromProgID("Shell.Application");
+                if (shellType is not null)
+                {
+                    object shell = Activator.CreateInstance(shellType)!;
+                    shellType.InvokeMember("ToggleDesktop", System.Reflection.BindingFlags.InvokeMethod, null, shell, null);
+                }
             }
-            Topmost = true;
-            Activate();
-            Topmost = false;
-            ShowPage("Dashboard");
-            HomeTileDashboard.Focus();
-            _controllerNavActive = true;
+            catch (Exception ex)
+            {
+                AppendLog($"Show desktop failed: {ex.Message}");
+            }
             return;
         }
 

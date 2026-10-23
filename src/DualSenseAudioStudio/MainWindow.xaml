@@ -674,6 +674,9 @@
                                             </StackPanel>
                                             <CheckBox x:Name="HapticsCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Haptics from game sound (beta)"
                                                       Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Feel game audio (bass, explosions) in the DualSense haptic motors." />
+                                            <CheckBox x:Name="LowLatencyCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Low latency mode"
+                                                      Checked="MicOption_Changed" Unchecked="MicOption_Changed"
+                                                      ToolTip="Smaller audio buffers (about half the headphone and mic delay) and top-priority controller input. Turn off if audio crackles." />
                                             <CheckBox x:Name="BatteryLightCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Battery-colored light bar"
                                                       ToolTip="Green when charged, yellow when half, red when low. Alerts at 20% and 10%." />
                                             <CheckBox x:Name="StartupCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Start with Windows (in tray)"
