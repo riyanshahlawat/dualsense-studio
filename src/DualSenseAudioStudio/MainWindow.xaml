@@ -4,8 +4,9 @@
         Title="DualSense Studio"
         Width="1240"
         Height="790"
-        MinWidth="1080"
-        MinHeight="700"
+        MinWidth="860"
+        MinHeight="600"
+        ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -14,6 +15,10 @@
         TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True"
         Loaded="Window_Loaded"
         Closing="Window_Closing">
+    <!-- Normal resizable window (drag any edge) with the custom PS5 title bar. -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
     <Window.Resources>
         <LinearGradientBrush x:Key="WindowBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#0A2A66" Offset="0" /><GradientStop Color="#05183D" Offset="0.45" /><GradientStop Color="#020814" Offset="1" /></LinearGradientBrush>
         <SolidColorBrush x:Key="SidebarBrush" Color="#66040C1F" />

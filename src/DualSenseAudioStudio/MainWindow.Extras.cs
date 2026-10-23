@@ -53,7 +53,16 @@ public partial class MainWindow
         {
             Hide();
         }
+
+        // Pop up the on-screen keyboard in any app when a text box is focused (Desktop mode).
+        Task.Run(() =>
+        {
+            try { _autoKeyboard = new Services.AutoKeyboard(); }
+            catch (Exception ex) { Dispatcher.BeginInvoke(() => AppendLog($"Auto keyboard unavailable: {ex.Message}")); }
+        });
     }
+
+    private Services.AutoKeyboard? _autoKeyboard;
 
     private void ShowFromTray()
     {
@@ -68,6 +77,7 @@ public partial class MainWindow
     private void ExitApp()
     {
         _exiting = true;
+        _autoKeyboard?.Dispose();
         if (_tray is not null)
         {
             _tray.Visible = false;
