@@ -888,6 +888,16 @@ public partial class MainWindow : Window
         {
             AppendLog(line);
 
+            // Controller mute button pressed: PS5-style on-screen pop-up.
+            if (line.StartsWith("Mic: muted", StringComparison.Ordinal))
+            {
+                Controls.MuteToast.Show(muted: true);
+            }
+            else if (line.StartsWith("Mic: unmuted", StringComparison.Ordinal))
+            {
+                Controls.MuteToast.Show(muted: false);
+            }
+
             if (line.Contains("HID controller opened", StringComparison.OrdinalIgnoreCase))
             {
                 _controllerConfirmed = true;
