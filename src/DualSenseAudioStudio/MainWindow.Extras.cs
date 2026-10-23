@@ -68,6 +68,51 @@ public partial class MainWindow
         }
 
         _ = CheckForUpdateAsync();
+        Dispatcher.BeginInvoke(CheckMicFormat, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+    }
+
+    // The mic travels through VB-Audio Hi-Fi Cable; if its two ends run at different
+    // sample rates the voice sounds muffled. Offer a one-time (admin) fix.
+    private void CheckMicFormat()
+    {
+        try
+        {
+            using var enumerator = new NAudio.CoreAudioApi.MMDeviceEnumerator();
+            int? Rate(NAudio.CoreAudioApi.DataFlow flow, string name) => enumerator
+                .EnumerateAudioEndPoints(flow, NAudio.CoreAudioApi.DeviceState.Active)
+                .Where(d => d.FriendlyName.Contains(name, StringComparison.OrdinalIgnoreCase) && d.FriendlyName.Contains("Hi-Fi", StringComparison.OrdinalIgnoreCase))
+                .Select(d => (int?)d.AudioClient.MixFormat.SampleRate)
+                .FirstOrDefault();
+
+            int? mic = Rate(NAudio.CoreAudioApi.DataFlow.Capture, "DualSense Wireless Controller");
+            int? link = Rate(NAudio.CoreAudioApi.DataFlow.Render, "DualSense mic link");
+            if (mic is null || link is null || (mic == 48000 && link == 48000))
+            {
+                return;
+            }
+
+            if (MessageBox.Show(this,
+                    $"Your microphone is set to {mic / 1000.0:0.#} kHz but needs 48 kHz, which makes your voice sound muffled to others.\n\nFix it now? (Windows will ask for permission once.)",
+                    "Fix microphone quality", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            string engine = Path.Combine(AppContext.BaseDirectory, "DualSenseBtAudio.exe");
+            var fix = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(engine, "--setup-devices")
+            {
+                UseShellExecute = true,
+                Verb = "runas",
+                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
+            });
+            fix?.WaitForExit(15000);
+            AppendLog("Microphone set to 48 kHz.");
+            RequestRestart();
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Mic format check skipped: {ex.Message}");
+        }
     }
 
     private Services.UpdateChecker.UpdateInfo? _update;

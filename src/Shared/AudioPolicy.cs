@@ -85,6 +85,38 @@ internal static class AudioPolicy
         }
     }
 
+    /// <summary>
+    /// Sets an endpoint's shared-mode format (admin), e.g. 48 kHz / 2 ch / 24-bit.
+    /// Both ends of a VB-Audio cable must use the same rate, or audio sounds muffled.
+    /// </summary>
+    public static void SetFormat(string deviceId, int sampleRate, int channels, int bits)
+    {
+        // WAVEFORMATEXTENSIBLE (40 bytes), PCM.
+        var wf = new byte[40];
+        int blockAlign = channels * bits / 8;
+        BitConverter.GetBytes((ushort)0xFFFE).CopyTo(wf, 0);          // WAVE_FORMAT_EXTENSIBLE
+        BitConverter.GetBytes((ushort)channels).CopyTo(wf, 2);
+        BitConverter.GetBytes(sampleRate).CopyTo(wf, 4);
+        BitConverter.GetBytes(sampleRate * blockAlign).CopyTo(wf, 8);
+        BitConverter.GetBytes((ushort)blockAlign).CopyTo(wf, 12);
+        BitConverter.GetBytes((ushort)bits).CopyTo(wf, 14);
+        BitConverter.GetBytes((ushort)22).CopyTo(wf, 16);              // cbSize
+        BitConverter.GetBytes((ushort)bits).CopyTo(wf, 18);            // valid bits
+        BitConverter.GetBytes(channels == 1 ? 4 : 3).CopyTo(wf, 20);   // channel mask
+        new Guid("00000001-0000-0010-8000-00aa00389b71").ToByteArray().CopyTo(wf, 24); // KSDATAFORMAT_SUBTYPE_PCM
+
+        IntPtr buffer = Marshal.AllocCoTaskMem(wf.Length);
+        try
+        {
+            Marshal.Copy(wf, 0, buffer, wf.Length);
+            Marshal.ThrowExceptionForHR(Create().SetDeviceFormat(deviceId, buffer, buffer));
+        }
+        finally
+        {
+            Marshal.FreeCoTaskMem(buffer);
+        }
+    }
+
     /// <summary>Shows or hides an endpoint in Sound settings (admin).</summary>
     public static void SetVisible(string deviceId, bool visible)
     {

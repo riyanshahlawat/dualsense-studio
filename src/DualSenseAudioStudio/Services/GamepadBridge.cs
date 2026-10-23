@@ -177,7 +177,7 @@ internal sealed class GamepadBridge : IDisposable
         p.SetButtonState(DualShock4Button.ThumbLeft, (b1 & 0x40) != 0);
         p.SetButtonState(DualShock4Button.ThumbRight, (b1 & 0x80) != 0);
         // PS opens DualSense Studio Home instead of being sent to the game.
-        p.SetButtonState(DualShock4SpecialButton.Touchpad, (b2 & 0x02) != 0);
+        // Touchpad press is a mouse click (left/right half), not sent to the game.
         p.SubmitReport();
     }
 
@@ -203,7 +203,7 @@ internal sealed class GamepadBridge : IDisposable
         _pad.SetButtonState(Xbox360Button.Y, (b0 & 0x80) != 0);      // Triangle
         _pad.SetButtonState(Xbox360Button.LeftShoulder, (b1 & 0x01) != 0);
         _pad.SetButtonState(Xbox360Button.RightShoulder, (b1 & 0x02) != 0);
-        _pad.SetButtonState(Xbox360Button.Back, (b1 & 0x10) != 0 || (b2 & 0x02) != 0); // Create / touchpad click
+        _pad.SetButtonState(Xbox360Button.Back, (b1 & 0x10) != 0); // Create (touchpad press is a mouse click)
         _pad.SetButtonState(Xbox360Button.Start, (b1 & 0x20) != 0);  // Options
         _pad.SetButtonState(Xbox360Button.LeftThumb, (b1 & 0x40) != 0);
         _pad.SetButtonState(Xbox360Button.RightThumb, (b1 & 0x80) != 0);
@@ -243,6 +243,7 @@ internal sealed class GamepadBridge : IDisposable
         if (s.Length >= 36)
         {
             UpdateTouchMouse(s.Slice(32, 4));
+            UpdateTouchClick(s.Slice(32, 4), (s[9] & 0x02) != 0);
         }
 
         if (s.Length > 52)
@@ -259,6 +260,27 @@ internal sealed class GamepadBridge : IDisposable
     private int _lastX, _lastY, _startX, _startY;
     private long _touchStart;
     private double _carryX, _carryY;
+
+    // Pressing the touchpad down: left half = left click, right half = right click
+    // (held while pressed, so drag works too).
+    private bool _padPressed, _padRight, _physicalClick;
+
+    private void UpdateTouchClick(ReadOnlySpan<byte> t, bool pressed)
+    {
+        if (pressed && !_padPressed)
+        {
+            bool fingerDown = (t[0] & 0x80) == 0;
+            int x = fingerDown ? t[1] | ((t[2] & 0x0F) << 8) : _lastX;
+            _padRight = x >= 960; // touchpad is 1920 wide
+            NativeInput.Button(_padRight, down: true);
+            _physicalClick = true;
+        }
+        else if (!pressed && _padPressed)
+        {
+            NativeInput.Button(_padRight, down: false);
+        }
+        _padPressed = pressed;
+    }
 
     private void UpdateTouchMouse(ReadOnlySpan<byte> t)
     {
@@ -296,10 +318,12 @@ internal sealed class GamepadBridge : IDisposable
             _touching = false;
             bool quick = Environment.TickCount64 - _touchStart < 180;
             bool still = Math.Abs(_lastX - _startX) < 25 && Math.Abs(_lastY - _startY) < 25;
-            if (quick && still)
+            // A tap clicks, unless the pad was pressed down (that click already happened).
+            if (quick && still && !_physicalClick)
             {
                 NativeInput.LeftClick();
             }
+            _physicalClick = false;
         }
     }
 

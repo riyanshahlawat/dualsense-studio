@@ -42,6 +42,10 @@ internal static class NativeInput
 
     public static void MoveMouse(int dx, int dy) => Send(dx, dy, MouseMove);
 
+    // Press/release for touchpad clicks (left half = left button, right half = right button).
+    public static void Button(bool right, bool down) =>
+        Send(0, 0, right ? (down ? 0x0008u : 0x0010u) : (down ? LeftDown : LeftUp));
+
     public static void LeftClick()
     {
         Send(0, 0, LeftDown);

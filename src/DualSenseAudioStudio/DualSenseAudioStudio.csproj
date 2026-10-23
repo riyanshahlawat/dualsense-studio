@@ -11,10 +11,10 @@
     <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
     <AssemblyName>DualSenseAudioStudio</AssemblyName>
     <RootNamespace>DualSenseAudioStudio</RootNamespace>
-    <Version>1.0.3</Version>
-    <AssemblyVersion>1.0.3.0</AssemblyVersion>
-    <FileVersion>1.0.3.0</FileVersion>
-    <InformationalVersion>1.0.3</InformationalVersion>
+    <Version>1.0.4</Version>
+    <AssemblyVersion>1.0.4.0</AssemblyVersion>
+    <FileVersion>1.0.4.0</FileVersion>
+    <InformationalVersion>1.0.4</InformationalVersion>
     <Product>DualSense Bluetooth Audio</Product>
     <Authors>DualSense Bluetooth Audio contributors</Authors>
     <Description>Stream Windows audio to a DualSense over Bluetooth.</Description>

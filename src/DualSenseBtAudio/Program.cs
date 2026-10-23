@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime;
@@ -41,10 +41,21 @@ internal static class Program
                     {
                         if (d.DataFlow == DataFlow.Render && name.StartsWith("CABLE Input", StringComparison.OrdinalIgnoreCase))
                             AudioPolicy.Rename(d.ID, "DualSense Wireless Controller", "Headphones");
-                        else if (d.DataFlow == DataFlow.Capture && name.Contains("Hi-Fi Cable Output", StringComparison.OrdinalIgnoreCase))
-                            AudioPolicy.Rename(d.ID, "DualSense Wireless Controller", "Headset Microphone");
-                        else if (d.DataFlow == DataFlow.Render && name.Contains("Hi-Fi Cable Input", StringComparison.OrdinalIgnoreCase))
-                            AudioPolicy.Rename(d.ID, "DualSense mic link", "Used by DualSense Studio - don't select");
+                        else if (d.DataFlow == DataFlow.Capture && (name.Contains("Hi-Fi Cable Output", StringComparison.OrdinalIgnoreCase)
+                                                                   || (name.StartsWith("DualSense Wireless Controller", StringComparison.OrdinalIgnoreCase) && name.Contains("Hi-Fi", StringComparison.OrdinalIgnoreCase))))
+                        {
+                            if (!name.StartsWith("DualSense Wireless Controller", StringComparison.OrdinalIgnoreCase))
+                                AudioPolicy.Rename(d.ID, "DualSense Wireless Controller", "Headset Microphone");
+                            // Must match the mic link's 48 kHz, or the voice sounds muffled.
+                            AudioPolicy.SetFormat(d.ID, 48000, 2, 24);
+                        }
+                        else if (d.DataFlow == DataFlow.Render && (name.Contains("Hi-Fi Cable Input", StringComparison.OrdinalIgnoreCase)
+                                                                  || name.StartsWith("DualSense mic link", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            if (!name.StartsWith("DualSense mic link", StringComparison.OrdinalIgnoreCase))
+                                AudioPolicy.Rename(d.ID, "DualSense mic link", "Used by DualSense Studio - don't select");
+                            AudioPolicy.SetFormat(d.ID, 48000, 2, 24);
+                        }
                         else if (name.StartsWith("CABLE In 16ch", StringComparison.OrdinalIgnoreCase)
                                  || (d.DataFlow == DataFlow.Capture && name.StartsWith("CABLE Output", StringComparison.OrdinalIgnoreCase)))
                             AudioPolicy.SetVisible(d.ID, false);
@@ -617,6 +628,14 @@ internal sealed class DualSenseAudioEngine : IDisposable
                     underflows++;
                 }
 
+                // Headphone loudness for the mic's echo reduction.
+                float playEnergy = 0;
+                for (int i = 0; i < inputSamples.Length; i++)
+                {
+                    playEnergy += inputSamples[i] * inputSamples[i];
+                }
+                MicBridge.PlaybackLevel = MathF.Sqrt(playEnergy / Math.Max(1, inputSamples.Length));
+
                 MicBridge.MixSidetone(inputSamples);
                 _lastInputWindow = inputSamples;
                 _clockResampler.Process(
@@ -832,8 +851,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
         report[state + 4] = _controllerState.Volume;
         report[state + 5] = _controllerState.Volume;
-        // Mic gain: 0x40 clipped at 100% peaks; 0x18 leaves headroom.
-        report[state + 6] = 0x18;
+        report[state + 6] = 0x24; // mic gain: louder voice; MicBridge soft-limits peaks
 
         // AudioControl:
         // Headset uses OutputPathSelect 2 (bits 4-5); speaker uses 0.

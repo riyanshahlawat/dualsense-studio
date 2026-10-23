@@ -14,6 +14,10 @@ internal sealed class MicBridge : IDisposable
     public static bool NoiseRemoval;
     public static bool Sidetone;
 
+    // Loudness of what's playing in the headphones (set by the audio engine), for echo reduction.
+    public static volatile float PlaybackLevel;
+    private float _duck = 1f;
+
     // Sidetone: a little of your own voice mixed into the headphone stream.
     private const float SidetoneGain = 0.35f;
     private static readonly object SidetoneLock = new();
@@ -65,7 +69,7 @@ internal sealed class MicBridge : IDisposable
         float rms = MathF.Sqrt(energy / Math.Max(1, count));
         // Floor tracks slowly upward and quickly downward.
         _noiseFloor = rms < _noiseFloor ? rms : _noiseFloor + (rms - _noiseFloor) * 0.002f;
-        float target = rms > _noiseFloor * 3.2f + 0.002f ? 1f : 0f;
+        float target = rms > _noiseFloor * 2.2f + 0.0015f ? 1f : 0f; // gentler gate: keeps soft word endings
         for (int i = 0; i < count; i++)
         {
             _gate += (target - _gate) * (target > _gate ? 0.05f : 0.002f);
@@ -193,6 +197,27 @@ internal sealed class MicBridge : IDisposable
                     CleanUp(pcm, decoded);
                 }
 
+                // Echo reduction: when your headphones are playing (friends talking) and
+                // the mic is only hearing that leak, turn the mic down so they don't
+                // hear themselves. Your own voice is louder than the leak and passes.
+                float micEnergy = 0;
+                for (int i = 0; i < decoded; i++)
+                {
+                    float x = pcm[i] / 32768f;
+                    micEnergy += x * x;
+                }
+                float micRms = MathF.Sqrt(micEnergy / Math.Max(1, decoded));
+                float playing = PlaybackLevel;
+                float duckTarget = playing > 0.015f && micRms < playing * 0.5f ? 0.12f : 1f;
+
+                for (int i = 0; i < decoded; i++)
+                {
+                    _duck += (duckTarget - _duck) * (duckTarget < _duck ? 0.01f : 0.004f);
+                    float x = pcm[i] / 32768f * _duck;
+                    // Soft limiter: loud bursts round off smoothly instead of clipping harshly.
+                    pcm[i] = (short)(MathF.Tanh(x * 1.15f) * 32000f);
+                }
+
                 if (Sidetone)
                 {
                     lock (SidetoneLock)
@@ -214,10 +239,21 @@ internal sealed class MicBridge : IDisposable
                     stereo[o + 2] = (byte)s;
                     stereo[o + 3] = (byte)(s >> 8);
                 }
-                // Controller and PC clocks drift; drop backlog to keep mic delay low.
-                if (_buffer.BufferedDuration.TotalMilliseconds > (DualSenseAudioEngine.LowLatency ? 20 : 40))
+                // Jitter buffer: keep a small cushion so late Bluetooth packets don't
+                // cause gaps, and trim gently (one 10 ms frame) when it grows too big.
+                // Never clear it all at once - that is what made the voice cut out.
+                double buffered = _buffer.BufferedDuration.TotalMilliseconds;
+                double cushion = DualSenseAudioEngine.LowLatency ? 20 : 30;
+                double ceiling = DualSenseAudioEngine.LowLatency ? 60 : 90;
+                if (buffered > ceiling)
                 {
-                    _buffer.ClearBuffer();
+                    continue; // drop this one frame to catch up
+                }
+                if (buffered < 5)
+                {
+                    // Ran dry: rebuild the cushion with a short bit of silence once.
+                    var pad = new byte[(int)(48 * cushion) * 4];
+                    _buffer.AddSamples(pad, 0, pad.Length);
                 }
                 _buffer.AddSamples(stereo, 0, decoded * 4);
                 _frames++;
