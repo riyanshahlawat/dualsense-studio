@@ -42,6 +42,13 @@ internal static class NativeInput
 
     public static void MoveMouse(int dx, int dy) => Send(dx, dy, MouseMove);
 
+    // Mouse wheel: vertical and horizontal (120 = one notch; smaller = smooth scrolling).
+    public static void Scroll(int vertical, int horizontal)
+    {
+        if (vertical != 0) Send(0, 0, 0x0800, vertical);
+        if (horizontal != 0) Send(0, 0, 0x1000, horizontal);
+    }
+
     // Press/release for touchpad clicks (left half = left button, right half = right button).
     public static void Button(bool right, bool down) =>
         Send(0, 0, right ? (down ? 0x0008u : 0x0010u) : (down ? LeftDown : LeftUp));
@@ -52,10 +59,10 @@ internal static class NativeInput
         Send(0, 0, LeftUp);
     }
 
-    private static void Send(int dx, int dy, uint flags)
+    private static void Send(int dx, int dy, uint flags, int data = 0)
     {
         var input = new Input { Type = InputMouse };
-        input.U.Mouse = new MouseInput { Dx = dx, Dy = dy, Flags = flags };
+        input.U.Mouse = new MouseInput { Dx = dx, Dy = dy, Flags = flags, MouseData = unchecked((uint)data) };
         SendInput(1, new[] { input }, Marshal.SizeOf<Input>());
     }
 }

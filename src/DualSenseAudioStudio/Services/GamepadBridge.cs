@@ -240,10 +240,14 @@ internal sealed class GamepadBridge : IDisposable
             }
         }
 
-        if (s.Length >= 36)
+        if (s.Length >= 40)
         {
-            UpdateTouchMouse(s.Slice(32, 4));
             UpdateTouchClick(s.Slice(32, 4), (s[9] & 0x02) != 0);
+            _touchpad.Update(s.Slice(32, 8), suppressTapClick: _physicalClick || _padPressed);
+            if (!_padPressed && (s[32] & 0x80) != 0)
+            {
+                _physicalClick = false; // finger lifted after a press-click
+            }
         }
 
         if (s.Length > 52)
@@ -254,12 +258,8 @@ internal sealed class GamepadBridge : IDisposable
         LastInput = DateTime.UtcNow;
     }
 
-    // Touchpad as a laptop trackpad: finger 1 moves the cursor, a quick tap left-clicks.
-    private const double MouseSensitivity = 1.6;
-    private bool _touching;
-    private int _lastX, _lastY, _startX, _startY;
-    private long _touchStart;
-    private double _carryX, _carryY;
+    // Touchpad as a MacBook-style trackpad (see TouchpadMouse).
+    private readonly TouchpadMouse _touchpad = new();
 
     // Pressing the touchpad down: left half = left click, right half = right click
     // (held while pressed, so drag works too).
@@ -270,7 +270,7 @@ internal sealed class GamepadBridge : IDisposable
         if (pressed && !_padPressed)
         {
             bool fingerDown = (t[0] & 0x80) == 0;
-            int x = fingerDown ? t[1] | ((t[2] & 0x0F) << 8) : _lastX;
+            int x = fingerDown ? t[1] | ((t[2] & 0x0F) << 8) : _touchpad.LastX;
             _padRight = x >= 960; // touchpad is 1920 wide
             NativeInput.Button(_padRight, down: true);
             _physicalClick = true;
@@ -280,51 +280,6 @@ internal sealed class GamepadBridge : IDisposable
             NativeInput.Button(_padRight, down: false);
         }
         _padPressed = pressed;
-    }
-
-    private void UpdateTouchMouse(ReadOnlySpan<byte> t)
-    {
-        bool down = (t[0] & 0x80) == 0;
-        int x = t[1] | ((t[2] & 0x0F) << 8);
-        int y = (t[2] >> 4) | (t[3] << 4);
-
-        if (down && !_touching)
-        {
-            _touching = true;
-            _lastX = _startX = x;
-            _lastY = _startY = y;
-            _touchStart = Environment.TickCount64;
-            return;
-        }
-
-        if (down)
-        {
-            _carryX += (x - _lastX) * MouseSensitivity;
-            _carryY += (y - _lastY) * MouseSensitivity;
-            int dx = (int)_carryX, dy = (int)_carryY;
-            _carryX -= dx;
-            _carryY -= dy;
-            if (dx != 0 || dy != 0)
-            {
-                NativeInput.MoveMouse(dx, dy);
-            }
-            _lastX = x;
-            _lastY = y;
-            return;
-        }
-
-        if (_touching)
-        {
-            _touching = false;
-            bool quick = Environment.TickCount64 - _touchStart < 180;
-            bool still = Math.Abs(_lastX - _startX) < 25 && Math.Abs(_lastY - _startY) < 25;
-            // A tap clicks, unless the pad was pressed down (that click already happened).
-            if (quick && still && !_physicalClick)
-            {
-                NativeInput.LeftClick();
-            }
-            _physicalClick = false;
-        }
     }
 
     private static short Axis(byte v) => (short)Math.Clamp((v - 128) * 258, short.MinValue, short.MaxValue);
