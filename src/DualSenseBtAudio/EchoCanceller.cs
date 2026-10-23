@@ -67,6 +67,10 @@ internal static class EchoCanceller
             {
                 Console.WriteLine("Mic: residual echo suppression on.");
             }
+            else if (_aec is not null)
+            {
+                Console.WriteLine("Mic: residual echo suppression unavailable (echo canceller still on).");
+            }
             Console.WriteLine($"Mic: voice processing on (auto gain, de-reverb{(noiseSuppression ? ", noise suppression" : "")}).");
         }
         catch (Exception ex)
@@ -96,17 +100,14 @@ internal static class EchoCanceller
         }
     }
 
+    // SpeexDSPSharp layout: wrapper._echoCanceler / ._preprocessor -> implementation
+    // (Static or Dynamic) -> _handler (SafeHandle around the native state pointer).
     private static IntPtr NativeHandle(object owner, string field)
     {
-        object? value = owner.GetType()
-            .GetField(field, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-            ?.GetValue(owner);
-        return value switch
-        {
-            SafeHandle handle => handle.DangerousGetHandle(),
-            IntPtr pointer => pointer,
-            _ => value?.GetType().GetField("handle", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(value) is IntPtr p ? p : IntPtr.Zero
-        };
+        const BindingFlags Any = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+        object? impl = owner.GetType().GetField(field, Any)?.GetValue(owner);
+        object? handler = impl is SafeHandle ? impl : impl?.GetType().GetField("_handler", Any)?.GetValue(impl);
+        return handler is SafeHandle safe && !safe.IsInvalid ? safe.DangerousGetHandle() : IntPtr.Zero;
     }
 
     /// <summary>Headphone audio (interleaved stereo float, 48 kHz) as the echo reference.</summary>
