@@ -18,6 +18,10 @@ internal sealed class MicBridge : IDisposable
     public static volatile float PlaybackLevel;
     private float _duck = 1f;
     private float _leakRatio = 1f;
+
+    // One-pole 80 Hz high-pass at 48 kHz: a = RC / (RC + dt).
+    private static readonly float HighPassCoefficient = 1f / (1f + 2f * MathF.PI * 80f / 48000f);
+    private float _hpIn, _hpOut;
     private readonly float[] _playHistory = new float[64];
     private int _playIndex;
     private double _lastFrameAt;
@@ -259,8 +263,20 @@ internal sealed class MicBridge : IDisposable
             {
                 _duck += (duckTarget - _duck) * (duckTarget < _duck ? 0.01f : 0.004f);
                 float x = pcm[i] / 32768f * _duck;
-                // Soft limiter: loud bursts round off smoothly instead of clipping harshly.
-                pcm[i] = (short)(MathF.Tanh(x * 1.15f) * 32000f);
+
+                // 80 Hz high-pass: removes rumble, desk bumps and handling noise.
+                float hp = HighPassCoefficient * (_hpOut + x - _hpIn);
+                _hpIn = x;
+                _hpOut = hp;
+                x = hp;
+
+                // Transparent limiter: untouched below -1 dB; only loud peaks round off.
+                float a = MathF.Abs(x);
+                if (a > 0.89f)
+                {
+                    x = MathF.Sign(x) * (0.89f + 0.11f * MathF.Tanh((a - 0.89f) / 0.11f));
+                }
+                pcm[i] = (short)(x * 32767f);
             }
 
             if (Sidetone)

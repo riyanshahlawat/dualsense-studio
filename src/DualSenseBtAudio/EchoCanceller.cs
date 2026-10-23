@@ -51,7 +51,7 @@ internal static class EchoCanceller
             int on = 1, off = 0;
             int denoise = noiseSuppression ? 1 : 0;
             _pre.Ctl(PreprocessorCtl.SPEEX_PREPROCESS_SET_DENOISE, ref denoise);
-            int noiseDb = -35; // stronger noise suppression
+            int noiseDb = -30; // strong noise suppression without a watery voice
             _pre.Ctl(PreprocessorCtl.SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, ref noiseDb);
             // No auto gain: it boosted keyboard clicks and room noise.
             _pre.Ctl(PreprocessorCtl.SPEEX_PREPROCESS_SET_AGC, ref off);
