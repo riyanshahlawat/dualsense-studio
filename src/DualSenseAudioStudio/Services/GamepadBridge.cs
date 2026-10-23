@@ -27,6 +27,9 @@ internal sealed class GamepadBridge : IDisposable
     public event Action<string>? StatusChanged;
 
     public event Action<string>? NavPressed;
+
+    // Stale reports skipped because newer input was already waiting (lag that was avoided).
+    public long SkippedReports { get; private set; }
     private int _lastRumble;
     private int _lastNav;
 
@@ -76,7 +79,31 @@ internal sealed class GamepadBridge : IDisposable
                 StatusChanged?.Invoke($"Player {Player}: game controller active ({(PlayStationMode ? "PlayStation" : "Xbox")})");
                 while (_running)
                 {
-                    ReadOnlySpan<byte> d = device.ReadTimeout(547, 100);
+                    ReadOnlySpan<byte> first = device.ReadTimeout(547, 100);
+                    if (first.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    // Always act on the newest input: drain anything Windows queued
+                    // behind it, so a slow moment never leaves the game reading stale
+                    // (laggy) controller state.
+                    byte[] latest = first.ToArray();
+                    while (true)
+                    {
+                        ReadOnlySpan<byte> next = device.ReadTimeout(547, 0);
+                        if (next.Length == 0)
+                        {
+                            break;
+                        }
+                        if (next[0] == 0x01 || (next[0] == 0x31 && next.Length > 1 && (next[1] & 0x0F) != 0x02))
+                        {
+                            latest = next.ToArray();
+                            SkippedReports++;
+                        }
+                    }
+
+                    ReadOnlySpan<byte> d = latest;
                     if (d.Length >= 12 && d[0] == 0x31 && (d[1] & 0x0F) != 0x02)
                     {
                         Submit(d.Slice(2));
