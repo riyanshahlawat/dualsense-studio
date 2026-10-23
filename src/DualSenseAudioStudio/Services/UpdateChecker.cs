@@ -74,7 +74,8 @@ internal static class UpdateChecker
             await download.CopyToAsync(file);
         }
 
-        Process.Start(new ProcessStartInfo(path, "/SILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS") { UseShellExecute = true });
+        // Normal installer window, ending with "Launch DualSense Studio".
+        Process.Start(new ProcessStartInfo(path, "/CLOSEAPPLICATIONS") { UseShellExecute = true });
     }
 
     private static Version Trim(Version v) => new(v.Major, v.Minor, Math.Max(0, v.Build));

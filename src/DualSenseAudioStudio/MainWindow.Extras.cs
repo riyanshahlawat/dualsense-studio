@@ -28,9 +28,21 @@ public partial class MainWindow
     private static bool StartedFromTray =>
         Environment.GetCommandLineArgs().Any(a => a.Equals("--tray", StringComparison.OrdinalIgnoreCase));
 
+    // Fit the window inside the screen's usable area (small or high-scaling displays).
+    private void FitToScreen()
+    {
+        Rect area = SystemParameters.WorkArea;
+        Width = Math.Max(MinWidth, Math.Min(Width, area.Width - 24));
+        Height = Math.Max(MinHeight, Math.Min(Height, area.Height - 24));
+        Left = area.Left + (area.Width - Width) / 2;
+        Top = area.Top + Math.Max(0, (area.Height - Height) / 2);
+    }
+
     private void InitializeExtras()
     {
+        FitToScreen();
         LoadPrefs();
+        ApplyLowLatencyTimer();
         StartupCheckBox.IsChecked = IsStartupEnabled();
         BatteryLightCheckBox.Checked += (_, _) => SavePrefs();
         BatteryLightCheckBox.Unchecked += (_, _) => SavePrefs();
@@ -201,6 +213,8 @@ public partial class MainWindow
     // Low latency: 1 ms Windows timer so controller input and UI timers wake on time.
     private void ApplyLowLatencyTimer()
     {
+        // Toggles fire while the window is still loading, before this checkbox exists.
+        if (LowLatencyCheckBox is null) return;
         bool want = LowLatencyCheckBox.IsChecked == true;
         if (want == _fastTimer) return;
         if (want) timeBeginPeriod(1); else timeEndPeriod(1);
