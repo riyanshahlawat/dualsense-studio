@@ -429,14 +429,14 @@
                     </Border>
                     <TextBlock Text="DUALSENSE STUDIO" Foreground="{StaticResource TextBrush}" FontWeight="Bold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" />
                     <Border Background="#0059B2" CornerRadius="7" Padding="7,3" Margin="9,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.0.1" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
+                        <TextBlock Text="v1.0.2" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
                     </Border>
                 </StackPanel>
 
                 <!-- Shown when GitHub has a newer version. -->
                 <Button x:Name="UpdateButton" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,420,0"
-                        Style="{StaticResource PrimaryButtonStyle}" Padding="14,6" Click="UpdateButton_Click" Visibility="Collapsed">
-                    <TextBlock x:Name="UpdateButtonText" Text="Update available" FontSize="12" />
+                        Style="{StaticResource SecondaryButtonStyle}" Padding="14,6" Click="UpdateButton_Click">
+                    <TextBlock x:Name="UpdateButtonText" Text="Check for updates" FontSize="12" />
                 </Button>
                 <!-- Power: stop everything (zero background load) or start again. -->
                 <Button x:Name="PowerButton" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,262,0"

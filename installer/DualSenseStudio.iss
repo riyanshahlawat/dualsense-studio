@@ -3,7 +3,7 @@
 ; drivers (VB-CABLE, Hi-Fi Cable, ViGEmBus, HidHide) and name the audio devices.
 
 #define AppName "DualSense Studio"
-#define AppVersion "1.0.1"
+#define AppVersion "1.0.2"
 #define AppExe "DualSenseAudioStudio.exe"
 
 [Setup]
@@ -19,7 +19,9 @@ DefaultDirName={localappdata}\Programs\DualSenseBtAudio
 DisableDirPage=yes
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-PrivilegesRequired=admin
+; Per-user install (no admin prompt), so in-app updates are silent like Discord.
+; Only the one-time driver step asks for admin, and only when a driver is missing.
+PrivilegesRequired=lowest
 UsedUserAreasWarning=no
 OutputDir=..\release
 OutputBaseFilename=DualSenseStudio-Setup
@@ -50,7 +52,8 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "DualSenseStudio"; ValueData: """{app}\{#AppExe}"" --tray"; Tasks: startup; Flags: uninsdeletevalue
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\setup\Setup.ps1"" -DriversOnly -AppDir ""{app}"""; StatusMsg: "Installing drivers (VB-CABLE, Hi-Fi Cable, ViGEmBus, HidHide)..."; Flags: waituntilterminated
+; Driver setup: hidden window, elevated, and skipped entirely when all drivers are present.
+Filename: "powershell.exe"; Parameters: "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ""{app}\setup\Setup.ps1"" -DriversOnly -AppDir ""{app}"""; Verb: runas; StatusMsg: "Installing drivers (VB-CABLE, Hi-Fi Cable, ViGEmBus, HidHide)..."; Flags: shellexec runhidden waituntilterminated; Check: DriversMissing
 Filename: "{app}\{#AppExe}"; Description: "Launch {#AppName}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent runasoriginaluser
 ; In-app updates run silently: reopen the app when done.
 Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; Flags: nowait runasoriginaluser; Check: WizardSilent
@@ -60,6 +63,18 @@ Type: filesandordirs; Name: "{app}\logs"
 Type: filesandordirs; Name: "{localappdata}\DualSenseAudioStudio"
 
 [Code]
+function ServiceExists(Name: String): Boolean;
+begin
+  Result := RegKeyExists(HKLM, 'SYSTEM\CurrentControlSet\Services\' + Name);
+end;
+
+// True when any required driver is missing (fresh PC). Updates never need this.
+function DriversMissing: Boolean;
+begin
+  Result := not (ServiceExists('VBAudioVACMME') and ServiceExists('VBAudioHFVAIOMME')
+    and ServiceExists('ViGEmBus') and ServiceExists('HidHide'));
+end;
+
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   ResultCode: Integer;

@@ -86,45 +86,73 @@ public partial class MainWindow
         }
     }
 
+    // Discord-style updates: check -> download in the background -> "Restart to update".
+    private string? _downloadedInstaller;
+    private bool _updateBusy;
+
+    private void SetUpdateButton(string text, bool primary, bool enabled = true)
+    {
+        UpdateButtonText.Text = text;
+        UpdateButton.Style = (Style)FindResource(primary ? "PrimaryButtonStyle" : "SecondaryButtonStyle");
+        UpdateButton.IsEnabled = enabled;
+        UpdateButton.Visibility = Visibility.Visible;
+    }
+
     private async Task<bool> CheckForUpdateOnceAsync(bool manual)
     {
-        _update = await Services.UpdateChecker.CheckAsync();
-        if (_update is null)
+        if (_updateBusy || _downloadedInstaller is not null)
         {
-            if (manual)
-            {
-                _tray?.ShowBalloonTip(2500, "DualSense Studio", $"You're up to date (v{Services.UpdateChecker.CurrentVersion.ToString(3)}).", Forms.ToolTipIcon.Info);
-            }
-            return false;
+            return _downloadedInstaller is not null;
         }
 
-        UpdateButtonText.Text = $"Update to v{_update.Version}";
-        UpdateButton.Visibility = Visibility.Visible;
-        AppendLog($"Update available: v{_update.Version}.");
-        _tray?.ShowBalloonTip(4000, "DualSense Studio update", $"Version {_update.Version} is available. Open the app and click Update.", Forms.ToolTipIcon.Info);
-        return true;
+        _updateBusy = true;
+        try
+        {
+            if (manual) SetUpdateButton("Checking…", primary: false, enabled: false);
+            _update = await Services.UpdateChecker.CheckAsync();
+            if (_update is null)
+            {
+                if (manual)
+                {
+                    SetUpdateButton($"Up to date ✓  v{Services.UpdateChecker.CurrentVersion.ToString(3)}", primary: false, enabled: false);
+                    await Task.Delay(2500);
+                }
+                SetUpdateButton("Check for updates", primary: false);
+                return false;
+            }
+
+            AppendLog($"Update available: v{_update.Version}. Downloading in the background…");
+            var progress = new Progress<double>(p => SetUpdateButton($"Downloading v{_update.Version}… {p:P0}", primary: false, enabled: false));
+            _downloadedInstaller = await Services.UpdateChecker.DownloadAsync(_update, progress);
+
+            SetUpdateButton($"Restart to update (v{_update.Version})", primary: true);
+            _tray?.ShowBalloonTip(4000, "DualSense Studio update ready", $"Version {_update.Version} is downloaded. Click \"Restart to update\" in the app.", Forms.ToolTipIcon.Info);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Update check failed: {ex.Message}");
+            SetUpdateButton("Update failed – retry", primary: false);
+            return false;
+        }
+        finally
+        {
+            _updateBusy = false;
+        }
     }
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_update is null)
+        if (_downloadedInstaller is null)
         {
+            await CheckForUpdateOnceAsync(manual: true);
             return;
         }
 
-        UpdateButton.IsEnabled = false;
-        UpdateButtonText.Text = "Downloading…";
-        try
-        {
-            await Services.UpdateChecker.InstallAsync(_update);
-            ExitApp();
-        }
-        catch (Exception ex)
-        {
-            AppendLog($"Update failed: {ex.Message}");
-            UpdateButtonText.Text = "Update failed – retry";
-            UpdateButton.IsEnabled = true;
-        }
+        // Install silently; the installer reopens the app when it's done.
+        SetUpdateButton("Restarting…", primary: true, enabled: false);
+        Services.UpdateChecker.ApplyAndRestart(_downloadedInstaller);
+        ExitApp();
     }
 
     private void ShowFromTray()

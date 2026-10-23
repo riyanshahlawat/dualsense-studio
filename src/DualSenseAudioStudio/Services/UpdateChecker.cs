@@ -58,24 +58,42 @@ internal static class UpdateChecker
         }
     }
 
-    /// <summary>Downloads the new installer and starts it (it closes and replaces this app).</summary>
-    public static async Task InstallAsync(UpdateInfo update)
+    /// <summary>Downloads the update in the background, reporting progress 0..1. Returns the installer path.</summary>
+    public static async Task<string> DownloadAsync(UpdateInfo update, IProgress<double>? progress = null)
     {
-        if (!update.DownloadUrl.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+        string path = Path.Combine(Path.GetTempPath(), $"DualSenseStudio-Setup-{update.Version}.exe");
+        using HttpResponseMessage response = await Http.GetAsync(update.DownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+        response.EnsureSuccessStatusCode();
+        long total = response.Content.Headers.ContentLength ?? 0;
+
+        await using Stream download = await response.Content.ReadAsStreamAsync();
+        await using FileStream file = File.Create(path);
+        var buffer = new byte[81920];
+        long done = 0;
+        int read;
+        while ((read = await download.ReadAsync(buffer)) > 0)
         {
-            Process.Start(new ProcessStartInfo(update.PageUrl) { UseShellExecute = true });
-            return;
+            await file.WriteAsync(buffer.AsMemory(0, read));
+            done += read;
+            if (total > 0)
+            {
+                progress?.Report((double)done / total);
+            }
         }
 
-        string path = Path.Combine(Path.GetTempPath(), SetupAssetName);
-        await using (Stream download = await Http.GetStreamAsync(update.DownloadUrl))
-        await using (FileStream file = File.Create(path))
-        {
-            await download.CopyToAsync(file);
-        }
+        return path;
+    }
 
-        // Normal installer window, ending with "Launch DualSense Studio".
-        Process.Start(new ProcessStartInfo(path, "/CLOSEAPPLICATIONS") { UseShellExecute = true });
+    /// <summary>
+    /// Installs silently (no windows, no admin prompt) and the installer reopens the
+    /// app when it's done. The caller exits right after.
+    /// </summary>
+    public static void ApplyAndRestart(string installerPath)
+    {
+        Process.Start(new ProcessStartInfo(installerPath, "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS")
+        {
+            UseShellExecute = true
+        });
     }
 
     private static Version Trim(Version v) => new(v.Major, v.Minor, Math.Max(0, v.Build));
