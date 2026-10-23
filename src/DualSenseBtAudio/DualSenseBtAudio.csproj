@@ -23,4 +23,7 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="OpusSharp" Version="1.6.1" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/AudioPolicy.cs" Link="AudioPolicy.cs" />
+  </ItemGroup>
 </Project>

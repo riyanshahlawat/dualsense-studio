@@ -23,6 +23,56 @@ internal static class Program
 
         try
         {
+            // One-time setup (run elevated): name the virtual cables like a real headset
+            // and hide the unused ones, so Windows shows a single "DualSense" device.
+            if (args.Contains("--setup-devices", StringComparer.OrdinalIgnoreCase))
+            {
+                using var devices = new MMDeviceEnumerator();
+                // Make the cable the default first, so hiding CABLE In 16ch can't leave Windows without one.
+                foreach (MMDevice d in devices.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+                {
+                    if (d.FriendlyName.StartsWith("CABLE Input", StringComparison.OrdinalIgnoreCase))
+                        AudioPolicy.SetDefault(d.ID);
+                }
+                foreach (MMDevice d in devices.EnumerateAudioEndPoints(DataFlow.All, DeviceState.All))
+                {
+                    string name = d.FriendlyName;
+                    try
+                    {
+                        if (d.DataFlow == DataFlow.Render && name.StartsWith("CABLE Input", StringComparison.OrdinalIgnoreCase))
+                            AudioPolicy.Rename(d.ID, "DualSense Wireless Controller", "Headphones");
+                        else if (d.DataFlow == DataFlow.Capture && name.Contains("Hi-Fi Cable Output", StringComparison.OrdinalIgnoreCase))
+                            AudioPolicy.Rename(d.ID, "DualSense Wireless Controller", "Headset Microphone");
+                        else if (d.DataFlow == DataFlow.Render && name.Contains("Hi-Fi Cable Input", StringComparison.OrdinalIgnoreCase))
+                            AudioPolicy.Rename(d.ID, "DualSense mic link", "Used by DualSense Studio - don't select");
+                        else if (name.StartsWith("CABLE In 16ch", StringComparison.OrdinalIgnoreCase)
+                                 || (d.DataFlow == DataFlow.Capture && name.StartsWith("CABLE Output", StringComparison.OrdinalIgnoreCase)))
+                            AudioPolicy.SetVisible(d.ID, false);
+                        else
+                            continue;
+                        Console.WriteLine($"Updated: {name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Failed: {name}: {ex.Message}");
+                    }
+                }
+                return 0;
+            }
+
+            if (args.Contains("--mic-probe", StringComparer.OrdinalIgnoreCase))
+            {
+                MicProbe.Run();
+                return 0;
+            }
+
+            MicBridge.Enabled = args.Contains("--mic", StringComparer.OrdinalIgnoreCase);
+            MicBridge.NoiseRemoval = args.Contains("--noise-removal", StringComparer.OrdinalIgnoreCase);
+            MicBridge.Sidetone = args.Contains("--sidetone", StringComparer.OrdinalIgnoreCase);
+            Haptics.Enabled = args.Contains("--haptics", StringComparer.OrdinalIgnoreCase);
+            string[] appFlags = { "--mic", "--noise-removal", "--sidetone", "--haptics" };
+            args = args.Where(a => !appFlags.Contains(a, StringComparer.OrdinalIgnoreCase)).ToArray();
+
             Options options = Options.Parse(args);
 
             if (options.Help)
@@ -71,6 +121,7 @@ internal static class Program
                 return 0;
             }
 
+            using MicBridge? mic = MicBridge.Enabled ? MicBridge.Start() : null;
             engine.StreamLoopback();
             return 0;
         }
@@ -198,6 +249,8 @@ internal sealed class DualSenseAudioEngine : IDisposable
     private readonly byte[] _opusEncodedB =
         new byte[ProtocolConstants.OpusPacketBytes];
 
+    private readonly ClockResampler _clockResampler = new();
+
     private long _hidWriteCount;
     private long _hidWriteTicksTotal;
     private long _hidWriteTicksMaximum;
@@ -223,7 +276,8 @@ internal sealed class DualSenseAudioEngine : IDisposable
         _encoder = new OpusEncoder(
             ProtocolConstants.SampleRate,
             ProtocolConstants.Channels,
-            OpusPredefinedValues.OPUS_APPLICATION_AUDIO);
+            // Low-delay mode (as DS5Dongle) skips Opus look-ahead.
+            OpusPredefinedValues.OPUS_APPLICATION_RESTRICTED_LOWDELAY);
 
         _encoder.SetExpertFrameDuration(
             OpusPredefinedValues.OPUS_FRAMESIZE_10_MS);
@@ -422,8 +476,9 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 outputFramesPerReport *
                 ProtocolConstants.Channels;
 
-            const int targetBufferMs = 170;
-            const int maximumBufferMs = 380;
+            // Lowered from 170/380 ms to cut headphone delay.
+            const int targetBufferMs = 60;
+            const int maximumBufferMs = 140;
 
             int targetBufferSamples =
                 ProtocolConstants.SampleRate *
@@ -558,7 +613,9 @@ internal sealed class DualSenseAudioEngine : IDisposable
                     underflows++;
                 }
 
-                ResampleStereoLinear(
+                MicBridge.MixSidetone(inputSamples);
+                _lastInputWindow = inputSamples;
+                _clockResampler.Process(
                     inputSamples,
                     inputFramesPerReport,
                     outputSamples,
@@ -761,7 +818,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
         // SetStateData byte 0:
         // AllowHeadphoneVolume | AllowSpeakerVolume | AllowAudioControl.
-        report[state + 0] = 0xB0;
+        report[state + 0] = MicBridge.Enabled ? (byte)0xF0 : (byte)0xB0;   // + AllowMicVolume
 
         // Without lighting control, preserve the original V5.5 audio flags and
         // do not declare lightbar or Player LEDs as valid fields.
@@ -771,7 +828,8 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
         report[state + 4] = _controllerState.Volume;
         report[state + 5] = _controllerState.Volume;
-        report[state + 6] = 0x40;
+        // Mic gain: 0x40 clipped at 100% peaks; 0x18 leaves headroom.
+        report[state + 6] = 0x18;
 
         // AudioControl:
         // Headset uses OutputPathSelect 2 (bits 4-5); speaker uses 0.
@@ -877,7 +935,8 @@ internal sealed class DualSenseAudioEngine : IDisposable
         report[1] = NextSequenceByte();
         report[2] = 0x91;
         report[3] = 0x06;
-        report[4] = 0x7E;
+        // Bit 0 enables the mic section (vDS: 0xFF vs 0xFE).
+        report[4] = MicBridge.Enabled ? (byte)0x7F : (byte)0x7E;
 
         byte bufferLength =
             checked((byte)_options.BufferLength);
@@ -956,6 +1015,11 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 "samples.");
         }
 
+        if (Haptics.Enabled)
+        {
+            return PrepareHaptics36(samples);
+        }
+
         byte[] report = _legacyReport;
         Array.Clear(report);
 
@@ -963,7 +1027,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
         report[1] = NextSequenceByte();
         report[2] = 0x91;
         report[3] = 0x07;
-        report[4] = 0xFE;
+        report[4] = MicBridge.Enabled ? (byte)0xFF : (byte)0xFE;
         report[9] = 0xFF;
         report[10] = _packetCounter++;
 
@@ -993,6 +1057,47 @@ internal sealed class DualSenseAudioEngine : IDisposable
         FillSonyCrc(report);
         return report;
     }
+
+    // vDS 0x36 packet (398 bytes): same pacing as Legacy35, plus a 64-byte
+    // haptics block (32 stereo int8 frames) derived from the game audio's bass.
+    private readonly byte[] _hapticsReport = new byte[398];
+
+    private byte[] PrepareHaptics36(float[] samples)
+    {
+        byte[] report = _hapticsReport;
+        Array.Clear(report);
+
+        report[0] = 0x36;
+        report[1] = NextSequenceByte();
+        report[2] = 0x91;
+        report[3] = 0x07;
+        report[4] = MicBridge.Enabled ? (byte)0xFF : (byte)0xFE;
+        byte bufferLength = checked((byte)_options.BufferLength);
+        for (int i = 5; i <= 9; i++)
+        {
+            report[i] = bufferLength;
+        }
+        report[10] = _packetCounter++;
+
+        // State block: all valid-flags zero, so it changes nothing.
+        report[11] = 0x90;
+        report[12] = 63;
+
+        report[76] = 0x92;
+        report[77] = 64;
+        Haptics.Fill(_lastInputWindow, report.AsSpan(78, 64));
+
+        report[142] = (byte)(GetAudioPacketType() | 0x80);
+        report[143] = ProtocolConstants.OpusPacketBytes;
+        Array.Copy(samples, 0, _opusFrameA, 0, ProtocolConstants.SamplesPerOpusPacket);
+        EncodeOpusFrame(_opusFrameA, _opusEncodedA);
+        Array.Copy(_opusEncodedA, 0, report, 144, ProtocolConstants.OpusPacketBytes);
+
+        FillSonyCrc(report);
+        return report;
+    }
+
+    private float[] _lastInputWindow = Array.Empty<float>();
 
     private void WritePreparedAudioReport(
         byte[] report)
@@ -1994,7 +2099,7 @@ internal sealed class ControllerControlMonitor
             return false;
         }
 
-        Volatile.Write(ref _nextCheckAt, now + 100);
+        Volatile.Write(ref _nextCheckAt, now + 20);
 
         try
         {

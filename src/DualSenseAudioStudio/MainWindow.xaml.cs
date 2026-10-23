@@ -37,6 +37,20 @@ public partial class MainWindow : Window
     private int _appliedLedBrightness;
     private int _appliedPlayerLeds = 4;
     private bool _appliedLightbarEnabled = true;
+    private bool _liveLightingPending;
+    private bool _restartPending;
+    private readonly List<GamepadBridge> _gamepads = new();
+    private GamepadBridge? _gamepad => _gamepads.OrderBy(g => g.Player).FirstOrDefault();
+    private string _currentPage = "Dashboard";
+    private bool _userStoppedAudio;
+    private string? _lastDefaultOutputId;
+    private DateTime _nextAutoStart = DateTime.MinValue;
+
+    private Button[] HomeTiles => new[]
+    {
+        HomeTileDashboard, HomeTileController, HomeTileAudio,
+        HomeTileLighting, HomeTileDiagnostics, HomeTileSettings
+    };
 
     public MainWindow()
     {
@@ -44,7 +58,7 @@ public partial class MainWindow : Window
 
         _controlDebounce = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(140)
+            Interval = TimeSpan.FromMilliseconds(40)
         };
         _controlDebounce.Tick += ControlDebounce_Tick;
 
@@ -60,6 +74,42 @@ public partial class MainWindow : Window
         _initialized = true;
         SetLightingDirty(false);
         UpdateLightingOwnershipInterface();
+        InitializeExtras();
+        try
+        {
+            if (File.Exists(EmulationFile) && File.ReadAllText(EmulationFile).Trim() == "playstation")
+            {
+                EmulatePlayStationRadio.IsChecked = true;
+            }
+        }
+        catch
+        {
+        }
+        UpdateGamepadBridge();
+
+        var tileTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        tileTimer.Tick += async (_, _) =>
+        {
+            ClockText.Text = DateTime.Now.ToString("t", CultureInfo.CurrentCulture);
+            UpdateGamepadBridge();
+            UpdateOverviewTiles();
+            await UpdateBatteryAsync();
+            await AutoStartAudioAsync();
+        };
+        tileTimer.Start();
+        ClockText.Text = DateTime.Now.ToString("t", CultureInfo.CurrentCulture);
+        SelectDualSenseAsWindowsDefault();
+        UpdateOverviewTiles();
+        ShowPage("Dashboard");
+        HomeLiveView.Content = new Controls.ControllerLiveView(compact: true);
+
+        // Containers must not take controller focus; only real controls should.
+        DisableContainerFocus(this);
+
+        // Keep the focus ring on the focused control as focus, scroll or layout changes.
+        AddHandler(Keyboard.GotKeyboardFocusEvent, new KeyboardFocusChangedEventHandler((_, _) => UpdateFocusRing()), true);
+        LayoutUpdated += (_, _) => UpdateFocusRing();
+        PreviewMouseDown += (_, _) => { _controllerNavActive = false; FocusRing.Visibility = Visibility.Collapsed; };
 
         UpdateColorPreview();
         UpdatePlayerLedPreview();
@@ -182,13 +232,13 @@ public partial class MainWindow : Window
     {
         if (_engine.IsRunning)
         {
-            MessageBox.Show(
-                this,
-                "End the current session before starting another test.",
-                "DualSense Audio Studio",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-            return;
+            // Audio runs all the time; pause it for one-off tests (auto-start resumes it).
+            if (_currentMode != EngineMode.Loopback || mode == EngineMode.Loopback)
+            {
+                return;
+            }
+            await StopEngineAsync();
+            _nextAutoStart = DateTime.UtcNow.AddSeconds(mode == EngineMode.MicProbe ? 20 : 8);
         }
 
         try
@@ -217,6 +267,10 @@ public partial class MainWindow : Window
                 PlayerLeds = settings.PlayerLeds,
                 LightbarEnabled = settings.LightbarEnabled,
                 AppControlsLighting = settings.AppControlsLighting,
+                EnableMic = MicEnabledCheckBox.IsChecked == true,
+                NoiseRemoval = NoiseRemovalCheckBox.IsChecked == true,
+                Sidetone = SidetoneCheckBox.IsChecked == true,
+                Haptics = HapticsCheckBox.IsChecked == true,
                 ControlFile = _controlFile.FilePath
             };
 
@@ -350,6 +404,14 @@ public partial class MainWindow : Window
         }
 
         SetLightingDirty(true);
+
+        // Apply lighting live instead of waiting for the Apply button.
+        if (AppLightingControlCheckBox.IsChecked == true)
+        {
+            _liveLightingPending = true;
+            _controlDebounce.Stop();
+            _controlDebounce.Start();
+        }
     }
 
     private void SetLightingDirty(bool dirty)
@@ -403,10 +465,426 @@ public partial class MainWindow : Window
         _controlDebounce.Start();
     }
 
+    // Settings the engine only reads at startup: restart a running audio session.
+    private void RequestRestart()
+    {
+        _restartPending = true;
+        ScheduleControlUpdate();
+    }
+
+    private bool _controllerNavActive;
+
+    private static void DisableContainerFocus(DependencyObject root)
+    {
+        if (root is ScrollViewer or ContentControl and not (Button or CheckBox or RadioButton or ComboBoxItem))
+        {
+            ((UIElement)root).Focusable = false;
+        }
+
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            DisableContainerFocus(VisualTreeHelper.GetChild(root, i));
+        }
+    }
+
+    // Moves the white focus ring onto the focused control (shown once the controller is used).
+    private void UpdateFocusRing()
+    {
+        if (!_controllerNavActive
+            || Keyboard.FocusedElement is not FrameworkElement element
+            || !element.IsVisible
+            || !IsAncestorOf(element))
+        {
+            FocusRing.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        try
+        {
+            Point topLeft = element.TransformToAncestor(FocusOverlay).Transform(new Point(0, 0));
+            const double pad = 4;
+            Canvas.SetLeft(FocusRing, topLeft.X - pad);
+            Canvas.SetTop(FocusRing, topLeft.Y - pad);
+            FocusRing.Width = element.ActualWidth + pad * 2;
+            FocusRing.Height = element.ActualHeight + pad * 2;
+            double radius = element is Button b && b.Style == (Style)FindResource("HomeTileStyle") ? 22
+                : element is Button s && s.Style == (Style)FindResource("SwatchStyle") ? FocusRing.Width / 2
+                : 12;
+            FocusRing.CornerRadius = new CornerRadius(radius);
+            FocusRing.Visibility = Visibility.Visible;
+        }
+        catch (InvalidOperationException)
+        {
+            FocusRing.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    // Controller navigation while this window is in front:
+    // L1/R1 switch home tiles, D-pad/left stick move focus, Cross selects, Circle goes Home.
+    private void HandleControllerNav(string button)
+    {
+        // PS button: bring DualSense Studio to the front on Home, from anywhere (like a PS5).
+        if (button == "PS")
+        {
+            Show();
+            if (WindowState == WindowState.Minimized)
+            {
+                WindowState = WindowState.Normal;
+            }
+            Topmost = true;
+            Activate();
+            Topmost = false;
+            ShowPage("Dashboard");
+            HomeTileDashboard.Focus();
+            _controllerNavActive = true;
+            return;
+        }
+
+        if (!IsActive)
+        {
+            return;
+        }
+
+        _controllerNavActive = true;
+        if (HandleKeyboardNav(button))
+        {
+            return;
+        }
+
+        Button[] tiles = HomeTiles;
+        int index = Array.FindIndex(tiles, t => Equals(t.Tag, _currentPage));
+        IInputElement? focused = Keyboard.FocusedElement;
+
+        switch (button)
+        {
+            case "L1":
+            case "R1":
+                int next = Math.Clamp(index + (button == "R1" ? 1 : -1), 0, tiles.Length - 1);
+                ShowPage((string)tiles[next].Tag);
+                tiles[next].Focus();
+                break;
+
+            case "Circle":
+                // Back: close an open dropdown first, otherwise go Home.
+                if (focused is ComboBoxItem openItem
+                    && ItemsControl.ItemsControlFromItemContainer(openItem) is ComboBox openCombo)
+                {
+                    openCombo.IsDropDownOpen = false;
+                    openCombo.Focus();
+                    break;
+                }
+                ShowPage("Dashboard");
+                HomeTileDashboard.Focus();
+                break;
+
+            case "Cross":
+                switch (focused)
+                {
+                    case ComboBoxItem item:
+                        item.IsSelected = true;
+                        if (ItemsControl.ItemsControlFromItemContainer(item) is ComboBox owner)
+                        {
+                            owner.IsDropDownOpen = false;
+                            owner.Focus();
+                        }
+                        break;
+                    case ComboBox dropdown when !dropdown.IsDropDownOpen:
+                        dropdown.IsDropDownOpen = true;
+                        Dispatcher.BeginInvoke(DispatcherPriority.Input, new Action(() =>
+                        {
+                            int i = Math.Max(0, dropdown.SelectedIndex);
+                            (dropdown.ItemContainerGenerator.ContainerFromIndex(i) as ComboBoxItem)?.Focus();
+                        }));
+                        break;
+                    case Button b:
+                        b.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+                        break;
+                    case CheckBox c:
+                        c.IsChecked = c.IsChecked != true;
+                        break;
+                    case TextBox textBox when !textBox.IsReadOnly:
+                        OpenKeyboard(textBox);
+                        break;
+                    case RadioButton r:
+                        r.IsChecked = true;
+                        break;
+                }
+                break;
+
+            default:
+                // Sliders take Left/Right as value changes.
+                if (focused is Slider slider && button is "Left" or "Right")
+                {
+                    double step = Math.Max(1, (slider.Maximum - slider.Minimum) / 25);
+                    slider.Value = Math.Clamp(slider.Value + (button == "Right" ? step : -step), slider.Minimum, slider.Maximum);
+                    break;
+                }
+
+                if (focused is not UIElement element || (focused is DependencyObject d && !IsAncestorOf(d) && focused is not ComboBoxItem))
+                {
+                    tiles[Math.Max(index, 0)].Focus();
+                    break;
+                }
+
+                // On the tile row, Left/Right walks the tiles and opens them, PS5-style.
+                int tileIndex = Array.IndexOf(tiles, focused);
+                if (tileIndex >= 0 && button is "Left" or "Right")
+                {
+                    int target = Math.Clamp(tileIndex + (button == "Right" ? 1 : -1), 0, tiles.Length - 1);
+                    ShowPage((string)tiles[target].Tag);
+                    tiles[target].Focus();
+                    break;
+                }
+
+                element.MoveFocus(new TraversalRequest(button switch
+                {
+                    "Up" => FocusNavigationDirection.Up,
+                    "Down" => FocusNavigationDirection.Down,
+                    "Left" => FocusNavigationDirection.Left,
+                    _ => FocusNavigationDirection.Right
+                }));
+                break;
+        }
+    }
+
+    // Selects "DualSense Wireless Controller" as the Windows playback and recording
+    // device, like plugging in a real headset (no admin needed).
+    private void SelectDualSenseAsWindowsDefault()
+    {
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            foreach (DataFlow flow in new[] { DataFlow.Render, DataFlow.Capture })
+            {
+                MMDevice? device = enumerator.EnumerateAudioEndPoints(flow, DeviceState.Active)
+                    .FirstOrDefault(d => d.FriendlyName.StartsWith("DualSense Wireless Controller", StringComparison.OrdinalIgnoreCase));
+                if (device is not null)
+                {
+                    AudioPolicy.SetDefault(device.ID);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            AppendLog($"Could not select DualSense as the Windows device: {ex.Message}");
+        }
+    }
+
+    // Audio runs automatically: started at launch and restarted whenever it stops
+    // while the controller is connected (no Start button).
+    private async Task AutoStartAudioAsync()
+    {
+        // Follow the Windows default output: restart capture when it changes.
+        string? defaultId = null;
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            using MMDevice device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            defaultId = device.ID;
+        }
+        catch
+        {
+        }
+
+        if (defaultId != _lastDefaultOutputId)
+        {
+            bool changed = _lastDefaultOutputId is not null;
+            _lastDefaultOutputId = defaultId;
+            if (changed && _engine.IsRunning && _currentMode == EngineMode.Loopback)
+            {
+                AppendLog("Windows output changed, following it...");
+                await StopEngineAsync();
+                _nextAutoStart = DateTime.MinValue;
+            }
+        }
+
+        if (_userStoppedAudio || _engine.IsRunning || DateTime.UtcNow < _nextAutoStart)
+        {
+            return;
+        }
+
+        bool present;
+        try
+        {
+            present = HidApi.Hid.Enumerate(0x054C, 0x0CE6).Any();
+        }
+        catch
+        {
+            present = false;
+        }
+
+        if (!present)
+        {
+            return;
+        }
+
+        _nextAutoStart = DateTime.UtcNow.AddSeconds(5);
+        await StartEngineAsync(EngineMode.Loopback);
+    }
+
+    // Refreshes the Overview tiles once a second (controller, games, audio, mic).
+    private void UpdateOverviewTiles()
+    {
+        bool present;
+        try
+        {
+            present = HidApi.Hid.Enumerate(0x054C, 0x0CE6).Any();
+        }
+        catch
+        {
+            present = false;
+        }
+
+        TileControllerText.Text = present ? "Connected" : "Not found";
+        TileControllerSub.Text = present ? "DualSense · Bluetooth" : "Pair it in Bluetooth settings";
+        HeroStatusDot.Fill = present ? (Brush)FindResource("SuccessBrush") : new SolidColorBrush(Color.FromRgb(100, 112, 131));
+        HeroStatusText.Text = present ? "CONNECTED" : "DISCONNECTED";
+
+        int? battery = _gamepad?.BatteryLevel;
+        HeroBatteryText.Text = battery is null
+            ? "BATTERY —"
+            : $"BATTERY {Math.Min(100, battery.Value * 10 + 5)}%{(_gamepad!.Charging ? " · CHARGING" : "")}";
+
+        TileGameText.Text = _gamepad is null ? "Off" : $"{(_gamepad.PlayStationMode ? "PlayStation" : "Xbox")} · {_gamepads.Count}P";
+        TileControllerSub.Text = present ? $"{Math.Max(1, _gamepads.Count)} controller(s) · Bluetooth" : TileControllerSub.Text;
+        bool audio = _engine.IsRunning && _currentMode == EngineMode.Loopback;
+        TileAudioText.Text = audio
+            ? (HeadsetRadio.IsChecked == true ? "On · Headset" : "On · Speaker")
+            : "Off";
+        if (!audio)
+        {
+            BufferText.Text = "Press Start audio";
+        }
+        TileMicText.Text = audio && MicEnabledCheckBox.IsChecked == true ? "On" : "Off";
+    }
+
+    private void GameControllerCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_initialized)
+        {
+            UpdateGamepadBridge();
+        }
+    }
+
+    private static readonly string EmulationFile = System.IO.Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "DualSenseAudioStudio", "emulation.txt");
+
+    private void EmulationMode_Checked(object sender, RoutedEventArgs e)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        bool playStation = EmulatePlayStationRadio.IsChecked == true;
+        try { File.WriteAllText(EmulationFile, playStation ? "playstation" : "xbox"); } catch { }
+
+        // Recreate every virtual controller as the chosen type.
+        if (_gamepads.Any(g => g.PlayStationMode != playStation))
+        {
+            RemoveAllGamepads();
+            UpdateGamepadBridge();
+        }
+    }
+
+    private void RemoveAllGamepads()
+    {
+        foreach (GamepadBridge g in _gamepads)
+        {
+            g.Dispose();
+        }
+        _gamepads.Clear();
+    }
+
+    // Multi-controller: one virtual gamepad per connected DualSense (Player 1-4).
+    // Called at start and every second, so controllers can join and leave anytime.
+    private void UpdateGamepadBridge()
+    {
+        bool wanted = GameControllerCheckBox.IsChecked == true && !_paused;
+        bool playStation = EmulatePlayStationRadio.IsChecked == true;
+        if (!wanted)
+        {
+            if (_gamepads.Count > 0)
+            {
+                RemoveAllGamepads();
+                AppendLog("Game controllers removed.");
+            }
+            return;
+        }
+
+        List<string> paths;
+        try
+        {
+            paths = HidApi.Hid.Enumerate(0x054C, 0x0CE6).Select(d => d.Path).Distinct().Take(4).ToList();
+        }
+        catch
+        {
+            return;
+        }
+
+        foreach (GamepadBridge gone in _gamepads.Where(g => !paths.Contains(g.DevicePath!)).ToList())
+        {
+            AppendLog($"Player {gone.Player} disconnected.");
+            gone.Dispose();
+            _gamepads.Remove(gone);
+        }
+
+        foreach (string path in paths.Where(p => _gamepads.All(g => g.DevicePath != p)))
+        {
+            int player = Enumerable.Range(1, 4).First(n => _gamepads.All(g => g.Player != n));
+            try
+            {
+                var bridge = new GamepadBridge(playStation, path, player);
+                bridge.StatusChanged += status =>
+                    Dispatcher.BeginInvoke(new Action(() => AppendLog(status)));
+                bridge.NavPressed += button =>
+                    Dispatcher.BeginInvoke(new Action(() => HandleControllerNav(button)));
+                _gamepads.Add(bridge);
+                AppendLog($"Player {player} connected ({(playStation ? "PlayStation" : "Xbox")}).");
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Game controller unavailable (is ViGEmBus installed?): {ex.Message}");
+                GameControllerCheckBox.IsChecked = false;
+                return;
+            }
+        }
+    }
+
+    private void MicEnabledCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_initialized)
+        {
+            RequestRestart();
+        }
+    }
+
     private async void ControlDebounce_Tick(object? sender, EventArgs e)
     {
         _controlDebounce.Stop();
-        await WriteCurrentControlAsync();
+
+        if (_restartPending)
+        {
+            _restartPending = false;
+            if (_engine.IsRunning && _currentMode == EngineMode.Loopback)
+            {
+                AppendLog("Setting changed, restarting audio...");
+                await StopEngineAsync();
+                await StartEngineAsync(EngineMode.Loopback);
+                return;
+            }
+        }
+
+        bool applyLighting = _liveLightingPending;
+        _liveLightingPending = false;
+        await WriteCurrentControlAsync(applyLighting);
+
+        // Audio not running: push lighting with a quick one-shot engine run.
+        if (applyLighting && !_engine.IsRunning)
+        {
+            await StartEngineAsync(EngineMode.Diagnostic);
+        }
     }
 
     private void Engine_OutputReceived(string line)
@@ -438,7 +916,7 @@ public partial class MainWindow : Window
             {
                 ReportsText.Text = statistics.Groups["reports"].Value;
                 QueueText.Text = statistics.Groups["queue"].Value + " / 10";
-                BufferText.Text = statistics.Groups["buffer"].Value + " ms";
+                BufferText.Text = $"Streaming · {statistics.Groups["buffer"].Value} ms buffer";
             }
         }));
     }
@@ -591,12 +1069,33 @@ public partial class MainWindow : Window
         LightingPage.Visibility = name == "Lighting" ? Visibility.Visible : Visibility.Collapsed;
         DiagnosticsPage.Visibility = name == "Diagnostics" ? Visibility.Visible : Visibility.Collapsed;
         SettingsPage.Visibility = name == "Settings" ? Visibility.Visible : Visibility.Collapsed;
+        ControllerPage.Content ??= new Controls.ControllerLiveView();
+        ControllerPage.Visibility = name == "Controller" ? Visibility.Visible : Visibility.Collapsed;
+        _currentPage = name;
+
+        // PS5 home tiles: the selected tile grows, gets a white ring, and its name shows beside the row.
+        foreach (Button tile in HomeTiles)
+        {
+            bool selected = Equals(tile.Tag, name);
+            tile.Width = tile.Height = selected ? 124 : 96;
+            tile.BorderBrush = selected ? Brushes.White : Brushes.Transparent;
+            tile.Background = selected
+                ? new SolidColorBrush(Color.FromArgb(0x55, 0x00, 0x70, 0xD1))
+                : new SolidColorBrush(Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+        }
+        HomeTileLabel.Text = name switch
+        {
+            "Dashboard" => "Home",
+            "Settings" => "Settings",
+            _ => name
+        };
 
         foreach (Button button in new[]
                  {
                      DashboardNavButton,
                      AudioNavButton,
                      LightingNavButton,
+                     ControllerNavButton,
                      DiagnosticsNavButton,
                      SettingsNavButton
                  })
@@ -607,10 +1106,11 @@ public partial class MainWindow : Window
                 StringComparison.Ordinal);
 
             button.Background = selected
-                ? new SolidColorBrush(Color.FromRgb(29, 38, 64))
-                : Brushes.Transparent;
-            button.Foreground = selected
                 ? Brushes.White
+                : Brushes.Transparent;
+            // PS5-style focus: white pill with dark text.
+            button.Foreground = selected
+                ? new SolidColorBrush(Color.FromRgb(0x0B, 0x12, 0x20))
                 : (Brush)FindResource("MutedBrush");
         }
     }
@@ -673,7 +1173,7 @@ public partial class MainWindow : Window
         _synchronizing = true;
         DashboardDeviceCombo.SelectedItem = AudioDeviceCombo.SelectedItem;
         _synchronizing = false;
-        ScheduleControlUpdate();
+        RequestRestart();
     }
 
     private void DashboardDeviceCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -686,7 +1186,7 @@ public partial class MainWindow : Window
         _synchronizing = true;
         AudioDeviceCombo.SelectedItem = DashboardDeviceCombo.SelectedItem;
         _synchronizing = false;
-        ScheduleControlUpdate();
+        RequestRestart();
     }
 
     private void AudioTarget_Checked(object sender, RoutedEventArgs e)
@@ -701,7 +1201,7 @@ public partial class MainWindow : Window
         DashboardHeadsetRadio.IsChecked = headset;
         DashboardSpeakerRadio.IsChecked = !headset;
         _synchronizing = false;
-        ScheduleControlUpdate();
+        RequestRestart();
     }
 
     private void DashboardTarget_Checked(object sender, RoutedEventArgs e)
@@ -716,7 +1216,7 @@ public partial class MainWindow : Window
         HeadsetRadio.IsChecked = headset;
         SpeakerRadio.IsChecked = !headset;
         _synchronizing = false;
-        ScheduleControlUpdate();
+        RequestRestart();
     }
 
     private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -928,6 +1428,11 @@ public partial class MainWindow : Window
         ScheduleControlUpdate();
     }
 
+    private async void MicProbeButton_Click(object sender, RoutedEventArgs e)
+    {
+        await StartEngineAsync(EngineMode.MicProbe);
+    }
+
     private void ClearLogButton_Click(object sender, RoutedEventArgs e)
     {
         DiagnosticsLog.Clear();
@@ -980,8 +1485,15 @@ public partial class MainWindow : Window
 
     private async void Window_Closing(object? sender, CancelEventArgs e)
     {
+        if (HideToTrayInsteadOfClosing())
+        {
+            e.Cancel = true;
+            return;
+        }
+
         if (_allowClose)
         {
+            RemoveAllGamepads();
             _engine.Dispose();
             return;
         }
@@ -989,6 +1501,7 @@ public partial class MainWindow : Window
         if (!_engine.IsRunning)
         {
             _allowClose = true;
+            RemoveAllGamepads();
             _engine.Dispose();
             return;
         }
@@ -1106,6 +1619,7 @@ public partial class MainWindow : Window
             EngineMode.Diagnostic => "HID diagnostics",
             EngineMode.Tone => "test tone",
             EngineMode.ListDevices => "device listing",
+            EngineMode.MicProbe => "mic probe",
             _ => "audio session"
         };
     }

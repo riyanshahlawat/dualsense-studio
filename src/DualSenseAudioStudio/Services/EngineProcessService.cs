@@ -163,6 +163,10 @@ internal sealed class EngineProcessService : IDisposable
             case EngineMode.ListDevices:
                 startInfo.ArgumentList.Add("--list-devices");
                 break;
+
+            case EngineMode.MicProbe:
+                startInfo.ArgumentList.Add("--mic-probe");
+                break;
         }
 
         startInfo.ArgumentList.Add(options.Full39 ? "--full39" : "--legacy35");
@@ -170,7 +174,8 @@ internal sealed class EngineProcessService : IDisposable
 
         AddValue(startInfo, "--volume", options.Volume);
         AddValue(startInfo, "--buffer", options.BufferLength);
-        AddValue(startInfo, "--period", options.PeriodMs);
+        // Legacy35 carries one 512-frame window per report, so it must be sent every 10.67 ms.
+        AddValue(startInfo, "--period", options.Full39 ? options.PeriodMs : 10.666667);
         AddValue(startInfo, "--led", options.LedHex.TrimStart('#').ToUpperInvariant());
         AddValue(startInfo, "--led-brightness", options.LedBrightness);
         AddValue(startInfo, "--player-leds", options.PlayerLeds);
@@ -181,17 +186,25 @@ internal sealed class EngineProcessService : IDisposable
             startInfo.ArgumentList.Add("--control-lighting");
         }
 
+        if (options.EnableMic && options.Mode == EngineMode.Loopback)
+        {
+            startInfo.ArgumentList.Add("--mic");
+            if (options.NoiseRemoval) startInfo.ArgumentList.Add("--noise-removal");
+            if (options.Sidetone) startInfo.ArgumentList.Add("--sidetone");
+        }
+
+        if (options.Haptics && options.Mode == EngineMode.Loopback)
+        {
+            startInfo.ArgumentList.Add("--haptics");
+        }
+
         if (!options.LightbarEnabled)
         {
             startInfo.ArgumentList.Add("--lightbar-off");
         }
 
-        if (
-            options.Mode == EngineMode.Loopback &&
-            options.DeviceIndex is not null)
-        {
-            AddValue(startInfo, "--device", options.DeviceIndex.Value);
-        }
+        // No --device: the engine captures the current Windows default output,
+        // so whatever is picked in the Windows sound menu plays on the controller.
     }
 
     private static void AddValue(

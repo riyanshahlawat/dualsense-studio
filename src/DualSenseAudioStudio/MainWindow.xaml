@@ -1,7 +1,7 @@
 <Window x:Class="DualSenseAudioStudio.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="DualSense Audio Studio v0.0.1"
+        Title="DualSense Studio"
         Width="1240"
         Height="790"
         MinWidth="1080"
@@ -11,19 +11,19 @@
         AllowsTransparency="True"
         Background="Transparent"
         FontFamily="{StaticResource UiFont}"
-        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextFormattingMode="Ideal" TextOptions.TextRenderingMode="ClearType" UseLayoutRounding="True"
         Loaded="Window_Loaded"
         Closing="Window_Closing">
     <Window.Resources>
-        <SolidColorBrush x:Key="WindowBrush" Color="#0B0E14" />
-        <SolidColorBrush x:Key="SidebarBrush" Color="#0F131C" />
-        <SolidColorBrush x:Key="CardBrush" Color="#131925" />
-        <SolidColorBrush x:Key="CardHoverBrush" Color="#182131" />
-        <SolidColorBrush x:Key="BorderBrush" Color="#222C3D" />
-        <SolidColorBrush x:Key="TextBrush" Color="#F4F7FC" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#8995A8" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#6C7CFF" />
-        <SolidColorBrush x:Key="AccentSoftBrush" Color="#2A315F" />
+        <LinearGradientBrush x:Key="WindowBrush" StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#0A2A66" Offset="0" /><GradientStop Color="#05183D" Offset="0.45" /><GradientStop Color="#020814" Offset="1" /></LinearGradientBrush>
+        <SolidColorBrush x:Key="SidebarBrush" Color="#66040C1F" />
+        <SolidColorBrush x:Key="CardBrush" Color="#1DFFFFFF" />
+        <SolidColorBrush x:Key="CardHoverBrush" Color="#22FFFFFF" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#28FFFFFF" />
+        <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#A7ADB9" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#0070D1" />
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#0D3B73" />
         <SolidColorBrush x:Key="SuccessBrush" Color="#54D6A4" />
         <SolidColorBrush x:Key="DangerBrush" Color="#FF6B7A" />
 
@@ -62,7 +62,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="ButtonBorder"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="10"
+                                CornerRadius="22"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center"
                                               VerticalAlignment="Center" />
@@ -84,12 +84,12 @@
         </Style>
 
         <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#1B2433" />
+            <Setter Property="Background" Value="#24FFFFFF" />
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
         </Style>
 
         <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#40202A" />
+            <Setter Property="Background" Value="#29FFFFFF" />
             <Setter Property="Foreground" Value="#FF9AA5" />
         </Style>
 
@@ -106,13 +106,13 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="NavBorder"
                                 Background="{TemplateBinding Background}"
-                                CornerRadius="10"
+                                CornerRadius="22"
                                 Padding="{TemplateBinding Padding}">
                             <ContentPresenter />
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="NavBorder" Property="Background" Value="#18202D" />
+                                <Setter TargetName="NavBorder" Property="Background" Value="#21FFFFFF" />
                                 <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -123,7 +123,7 @@
 
         <Style TargetType="TextBox">
             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-            <Setter Property="Background" Value="#0E141E" />
+            <Setter Property="Background" Value="#1AFFFFFF" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="11,9" />
@@ -132,7 +132,7 @@
 
         <Style TargetType="ComboBoxItem">
             <Setter Property="Foreground" Value="#D9E1EC" />
-            <Setter Property="Background" Value="#0E141E" />
+            <Setter Property="Background" Value="#1AFFFFFF" />
             <Setter Property="Padding" Value="12,9" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="Template">
@@ -147,11 +147,11 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#24304A" />
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#2DFFFFFF" />
                                 <Setter Property="Foreground" Value="White" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="ItemBorder" Property="Background" Value="#303B6D" />
+                                <Setter TargetName="ItemBorder" Property="Background" Value="#0059B2" />
                                 <Setter Property="Foreground" Value="White" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -165,7 +165,7 @@
 
         <Style TargetType="ComboBox">
             <Setter Property="Foreground" Value="#E7ECF4" />
-            <Setter Property="Background" Value="#0E141E" />
+            <Setter Property="Background" Value="#1AFFFFFF" />
             <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="12,9" />
@@ -183,16 +183,16 @@
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
                                         <Border x:Name="ComboBorder"
-                                                Background="#0E141E"
+                                                Background="#1AFFFFFF"
                                                 BorderBrush="#293548"
                                                 BorderThickness="1"
                                                 CornerRadius="9" />
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#53627A" />
+                                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#757B87" />
                                             </Trigger>
                                             <Trigger Property="IsChecked" Value="True">
-                                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#6C7CFF" />
+                                                <Setter TargetName="ComboBorder" Property="BorderBrush" Value="#6CB5FF" />
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -211,7 +211,7 @@
                                                   TextElement.Foreground="{TemplateBinding Foreground}" />
                                 <Path Grid.Column="1"
                                       Data="M3,6 L8,11 L13,6"
-                                      Stroke="#8F9CAF"
+                                      Stroke="#AEB4C0"
                                       StrokeThickness="1.8"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round"
@@ -230,14 +230,14 @@
                                    Focusable="False"
                                    PopupAnimation="Fade">
                                 <Border Width="{Binding ActualWidth, ElementName=DropDownToggle}"
-                                        Background="#0B1018"
+                                        Background="#17FFFFFF"
                                         BorderBrush="#344158"
                                         BorderThickness="1"
                                         CornerRadius="10"
                                         Padding="3"
                                         Margin="0,5,0,0">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="5" Opacity="0.55" />
+                                        <DropShadowEffect Color="#0EFFFFFF" BlurRadius="20" ShadowDepth="5" Opacity="0.55" />
                                     </Border.Effect>
                                     <ScrollViewer MaxHeight="250"
                                                   VerticalScrollBarVisibility="Auto"
@@ -258,8 +258,130 @@
             </Setter>
         </Style>
 
+        <!-- PS5 slider: thin rounded track, blue filled part, white round knob. -->
+        <Style x:Key="Ps5SliderRepeat" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Background="Transparent" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="Slider">
             <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="IsMoveToPointEnabled" Value="True" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid VerticalAlignment="Center">
+                            <Border Height="6" CornerRadius="3" Background="#33FFFFFF" />
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource Ps5SliderRepeat}" Command="Slider.DecreaseLarge">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="6" CornerRadius="3" Background="#1F8FFF" />
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource Ps5SliderRepeat}" Command="Slider.IncreaseLarge" />
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Focusable="False">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse Width="20" Height="20" Fill="White">
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#7FB8FF" Opacity="0.8" />
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- PS5 color swatch: round chip; Background is the color. -->
+        <Style x:Key="SwatchStyle" TargetType="Button">
+            <Setter Property="Width" Value="52" />
+            <Setter Property="Height" Value="52" />
+            <Setter Property="Margin" Value="0,0,14,10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid>
+                            <Ellipse Fill="{TemplateBinding Background}" />
+                            <Ellipse x:Name="Hover" Stroke="White" StrokeThickness="2" Opacity="0" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Hover" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- PS5 toggles: checkbox as a switch, radio as a ring. -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#E4EAF3" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <Border x:Name="Track" Width="40" Height="22" CornerRadius="11" Background="#40FFFFFF" VerticalAlignment="Center">
+                                <Ellipse x:Name="Knob" Width="16" Height="16" Fill="White" HorizontalAlignment="Left" Margin="3,0" />
+                            </Border>
+                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Track" Property="Background" Value="#1F8FFF" />
+                                <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Right" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- PS5 home tile: rounded glass square; selected (Tag on Opacity trick via code) grows with a white ring. -->
+        <Style x:Key="HomeTileStyle" TargetType="Button">
+            <Setter Property="Width" Value="96" />
+            <Setter Property="Height" Value="96" />
+            <Setter Property="Margin" Value="0,0,14,0" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Background" Value="#26FFFFFF" />
+            <Setter Property="BorderBrush" Value="#00FFFFFF" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Tile" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="3" CornerRadius="18">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Tile" Property="Background" Value="#3DFFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
@@ -276,11 +398,11 @@
     </Window.Resources>
 
     <Border Background="{StaticResource WindowBrush}"
-            BorderBrush="#2A3445"
+            BorderBrush="#2DFFFFFF"
             BorderThickness="1"
             CornerRadius="16">
         <Border.Effect>
-            <DropShadowEffect BlurRadius="34" ShadowDepth="0" Opacity="0.48" Color="#000000" />
+            <DropShadowEffect BlurRadius="34" ShadowDepth="0" Opacity="0.48" Color="#0EFFFFFF" />
         </Border.Effect>
 
         <Grid>
@@ -289,7 +411,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Background="#0D1119" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid Grid.Row="0" Background="#00000000" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="236" />
                     <ColumnDefinition Width="*" />
@@ -298,41 +420,77 @@
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
                     <Border Width="24" Height="24" CornerRadius="7" Background="{StaticResource AccentBrush}">
-                        <Path Data="{StaticResource IconAudio}" Stroke="White" StrokeThickness="1.7" Stretch="Uniform" Margin="5" />
+                        <Path Data="{StaticResource IconController}" Stroke="White" StrokeThickness="1.7" Stretch="Uniform" Margin="4" />
                     </Border>
-                    <TextBlock Text="DS AUDIO STUDIO" Foreground="{StaticResource TextBrush}" FontWeight="Bold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" />
-                    <Border Background="#252E55" CornerRadius="7" Padding="7,3" Margin="9,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="DUALSENSE STUDIO" Foreground="{StaticResource TextBrush}" FontWeight="Bold" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center" />
+                    <Border Background="#0059B2" CornerRadius="7" Padding="7,3" Margin="9,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="v0.0.1" Foreground="#C8D0FF" FontSize="9" FontWeight="Bold" />
                     </Border>
                 </StackPanel>
 
-                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" Background="#15211F" CornerRadius="12" Padding="10,5">
+                <!-- Power: stop everything (zero background load) or start again. -->
+                <Button x:Name="PowerButton" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,262,0"
+                        Style="{StaticResource SecondaryButtonStyle}" Padding="14,6" Click="PowerButton_Click" ToolTip="Start or stop audio, mic and game controllers">
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="TopStatusDot" Width="7" Height="7" Fill="#647083" VerticalAlignment="Center" />
+                        <Ellipse x:Name="PowerDot" Width="8" Height="8" Fill="#54D6A4" VerticalAlignment="Center" />
+                        <TextBlock x:Name="PowerText" Text="Running · Stop" Margin="8,0,0,0" FontSize="12" />
+                    </StackPanel>
+                </Button>
+                <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" Background="#1DFFFFFF" CornerRadius="12" Padding="10,5">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="ClockText" Text="00:00" Foreground="White" FontSize="13" FontWeight="SemiBold" Margin="0,0,14,0" VerticalAlignment="Center" />
+                        <Ellipse x:Name="TopStatusDot" Width="7" Height="7" Fill="#828894" VerticalAlignment="Center" />
                         <TextBlock x:Name="TopStatusText" Text="Engine stopped" Foreground="#B6C1D0" FontSize="11" Margin="7,0,0,0" />
                     </StackPanel>
                 </Border>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Width="44" Height="48" Background="Transparent" BorderThickness="0" Click="MinimizeButton_Click" ToolTip="Minimize">
-                        <Path Data="M5,12 L19,12" Stroke="#9AA7BA" StrokeThickness="1.5" Width="14" Height="14" Stretch="Uniform" />
+                        <Path Data="M5,12 L19,12" Stroke="#B9BFCB" StrokeThickness="1.5" Width="14" Height="14" Stretch="Uniform" />
                     </Button>
                     <Button Width="44" Height="48" Background="Transparent" BorderThickness="0" Click="MaximizeButton_Click" ToolTip="Maximize">
-                        <Rectangle Width="11" Height="11" Stroke="#9AA7BA" StrokeThickness="1.2" />
+                        <Rectangle Width="11" Height="11" Stroke="#B9BFCB" StrokeThickness="1.2" />
                     </Button>
                     <Button Width="44" Height="48" Background="Transparent" BorderThickness="0" Click="CloseButton_Click" ToolTip="Close">
-                        <Path Data="M5,5 L19,19 M19,5 L5,19" Stroke="#9AA7BA" StrokeThickness="1.5" Width="13" Height="13" Stretch="Uniform" />
+                        <Path Data="M5,5 L19,19 M19,5 L5,19" Stroke="#B9BFCB" StrokeThickness="1.5" Width="13" Height="13" Stretch="Uniform" />
                     </Button>
                 </StackPanel>
             </Grid>
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="236" />
+                    <ColumnDefinition Width="0" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                <Border Background="{StaticResource SidebarBrush}" BorderBrush="#1C2532" BorderThickness="0,1,1,0" CornerRadius="0,0,0,16">
+                <!-- PS5 home-style tile row: big rounded tiles, the selected one grows and shows its name. -->
+                <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" Margin="40,18,40,0" Height="150" VerticalAlignment="Top">
+                    <Button x:Name="HomeTileDashboard" Style="{StaticResource HomeTileStyle}" Tag="Dashboard" Click="NavigationButton_Click">
+                        <Path Data="{StaticResource IconHome}" Fill="White" Width="34" Height="34" Stretch="Uniform" />
+                    </Button>
+                    <Button x:Name="HomeTileController" Style="{StaticResource HomeTileStyle}" Tag="Controller" Click="NavigationButton_Click">
+                        <Path Data="{StaticResource IconController}" Stroke="White" StrokeThickness="1.6" Width="44" Height="44" Stretch="Uniform" />
+                    </Button>
+                    <Button x:Name="HomeTileAudio" Style="{StaticResource HomeTileStyle}" Tag="Audio" Click="NavigationButton_Click">
+                        <Path Data="{StaticResource IconHeadset}" Stroke="White" StrokeThickness="1.6" Width="40" Height="40" Stretch="Uniform" />
+                    </Button>
+                    <Button x:Name="HomeTileLighting" Style="{StaticResource HomeTileStyle}" Tag="Lighting" Click="NavigationButton_Click">
+                        <Path Data="{StaticResource IconLight}" Fill="White" Width="38" Height="38" Stretch="Uniform" />
+                    </Button>
+                    <Button x:Name="HomeTileDiagnostics" Style="{StaticResource HomeTileStyle}" Tag="Diagnostics" Click="NavigationButton_Click">
+                        <Path Data="{StaticResource IconActivity}" Stroke="White" StrokeThickness="2" Width="38" Height="38" Stretch="Uniform" />
+                    </Button>
+                    <Button x:Name="HomeTileSettings" Style="{StaticResource HomeTileStyle}" Tag="Settings" Click="NavigationButton_Click">
+                        <Path Data="{StaticResource IconSettings}" Fill="White" Width="36" Height="36" Stretch="Uniform" />
+                    </Button>
+                    <TextBlock x:Name="HomeTileLabel" Text="Home" Foreground="White" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" Margin="18,0,0,22" />
+                </StackPanel>
+
+                <Border Grid.RowSpan="2" Visibility="Collapsed" Background="{StaticResource SidebarBrush}" BorderBrush="#24FFFFFF" BorderThickness="0,1,1,0" CornerRadius="0,0,0,16">
                     <Grid Margin="16,22,16,18">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -341,9 +499,9 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel>
-                            <TextBlock Text="NAVIGATION" Foreground="#5F6C7F" FontSize="10" FontWeight="Bold" Margin="12,0,0,10" />
+                            <TextBlock Text="NAVIGATION" Foreground="#7E8490" FontSize="10" FontWeight="Bold" Margin="12,0,0,10" />
 
-                            <Button x:Name="DashboardNavButton" Style="{StaticResource NavButtonStyle}" Tag="Dashboard" Click="NavigationButton_Click" Background="#1D2640" Foreground="White">
+                            <Button x:Name="DashboardNavButton" Style="{StaticResource NavButtonStyle}" Tag="Dashboard" Click="NavigationButton_Click" Background="#FFFFFFFF" Foreground="White">
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource IconHome}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="18" Height="18" Stretch="Uniform" />
                                     <TextBlock Text="Overview" Margin="13,0,0,0" FontWeight="SemiBold" />
@@ -361,9 +519,16 @@
                                 <StackPanel Orientation="Horizontal">
                                     <Path Data="{StaticResource IconLight}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Width="18" Height="18" Stretch="Uniform" />
                                     <TextBlock Text="Lighting" Margin="13,0,0,0" FontWeight="SemiBold" />
-                                    <Border Background="#40321C" BorderBrush="#6A5126" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0">
+                                    <Border Background="#27FFFFFF" BorderBrush="#6A5126" BorderThickness="1" CornerRadius="6" Padding="6,2" Margin="8,0,0,0">
                                         <TextBlock Text="BETA" Foreground="#FFCF7A" FontSize="8" FontWeight="Bold" />
                                     </Border>
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="ControllerNavButton" Style="{StaticResource NavButtonStyle}" Tag="Controller" Click="NavigationButton_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource IconActivity}" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="2" Width="18" Height="18" Stretch="Uniform" />
+                                    <TextBlock Text="Controller" Margin="13,0,0,0" FontWeight="SemiBold" />
                                 </StackPanel>
                             </Button>
 
@@ -382,11 +547,11 @@
                             </Button>
                         </StackPanel>
 
-                        <Border Grid.Row="2" Background="#121A25" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14">
+                        <Border Grid.Row="2" Background="#1DFFFFFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Border Width="34" Height="34" Background="#232C42" CornerRadius="10">
-                                        <Path Data="{StaticResource IconController}" Stroke="#98A7FF" StrokeThickness="1.6" Width="21" Height="21" Stretch="Uniform" />
+                                    <Border Width="34" Height="34" Background="#2AFFFFFF" CornerRadius="10">
+                                        <Path Data="{StaticResource IconController}" Stroke="#98CBFF" StrokeThickness="1.6" Width="21" Height="21" Stretch="Uniform" />
                                     </Border>
                                     <StackPanel Margin="10,0,0,0">
                                         <TextBlock Text="DualSense" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="12" />
@@ -404,14 +569,14 @@
                     </Grid>
                 </Border>
 
-                <Grid Grid.Column="1" Margin="28,24,28,24">
+                <Grid Grid.Column="1" Grid.Row="1" Margin="40,10,40,24">
                     <!-- OVERVIEW -->
                     <ScrollViewer x:Name="DashboardPage" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <StackPanel>
                                     <TextBlock Text="Overview" Style="{StaticResource SectionTitleStyle}" />
-                                    <TextBlock Text="Bluetooth audio, controller status, and lighting in one place." Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,5,0,0" />
+                                    <TextBlock Text="Your DualSense on PC: games, headset audio, mic and lighting over Bluetooth." Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,5,0,0" />
                                 </StackPanel>
                             </StackPanel>
 
@@ -422,7 +587,7 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <Border Style="{StaticResource CardStyle}" Background="#121827" MinHeight="330">
+                                <Border Style="{StaticResource CardStyle}" Background="#1EFFFFFF" MinHeight="330">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
@@ -431,31 +596,20 @@
                                         </Grid.RowDefinitions>
 
                                         <StackPanel Orientation="Horizontal">
-                                            <Border Background="#1A2433" CornerRadius="10" Padding="10,6">
+                                            <Border Background="#23FFFFFF" CornerRadius="10" Padding="10,6">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Ellipse x:Name="HeroStatusDot" Width="8" Height="8" Fill="#647083" VerticalAlignment="Center" />
+                                                    <Ellipse x:Name="HeroStatusDot" Width="8" Height="8" Fill="#828894" VerticalAlignment="Center" />
                                                     <TextBlock x:Name="HeroStatusText" Text="DISCONNECTED" Foreground="#B4BECC" FontSize="10" FontWeight="Bold" Margin="7,0,0,0" />
                                                 </StackPanel>
                                             </Border>
-                                            <TextBlock Text="FULL39 PROTOCOL" Foreground="#66758B" FontSize="10" FontWeight="Bold" Margin="12,6,0,0" />
+                                            <TextBlock x:Name="HeroBatteryText" Text="BATTERY —" Foreground="#A7ADB9" FontSize="10" FontWeight="Bold" Margin="12,6,0,0" />
                                         </StackPanel>
 
-                                        <Viewbox Grid.Row="1" Stretch="Uniform" Margin="12,2">
-                                            <Canvas Width="620" Height="340">
-                                                <Ellipse x:Name="DashboardGlow" Width="450" Height="110" Canvas.Left="85" Canvas.Top="210" Fill="#263476" Opacity="0.5">
-                                                    <Ellipse.Effect>
-                                                        <BlurEffect Radius="44" />
-                                                    </Ellipse.Effect>
-                                                </Ellipse>
-                                                <Image Source="Assets/DualSense.png"
-                                                       Width="740"
-                                                       Height="389"
-                                                       Canvas.Left="-60"
-                                                       Canvas.Top="-18"
-                                                       Stretch="Uniform"
-                                                       RenderOptions.BitmapScalingMode="HighQuality" />
-                                            </Canvas>
+                                        <!-- Live controller (buttons, sticks, triggers) instead of a static picture. -->
+                                        <Viewbox Grid.Row="1" Stretch="Uniform" Margin="12,8">
+                                            <ContentControl x:Name="HomeLiveView" Focusable="False" />
                                         </Viewbox>
+                                        <Ellipse x:Name="DashboardGlow" Visibility="Collapsed" />
 
                                         <Grid Grid.Row="2">
                                             <Grid.ColumnDefinitions>
@@ -463,10 +617,10 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <StackPanel>
-                                                <TextBlock Text="DualSense Bluetooth" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="16" />
-                                                <TextBlock x:Name="HeroSubtitle" Text="Connect the controller and start a session" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,0" />
+                                                <TextBlock Text="DualSense Wireless Controller" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="16" />
+                                                <TextBlock x:Name="HeroSubtitle" Text="Audio, mic and game mode start automatically" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,0" />
                                             </StackPanel>
-                                            <Button x:Name="SessionButton" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Click="SessionButton_Click">
+                                            <Button x:Name="SessionButton" Visibility="Collapsed" Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" Click="SessionButton_Click">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Path x:Name="SessionButtonIcon" Data="{StaticResource IconPlay}" Fill="White" Width="14" Height="14" Stretch="Uniform" />
                                                     <TextBlock x:Name="SessionButtonText" Text="Start audio" Margin="9,0,0,0" />
@@ -493,6 +647,32 @@
                                                 <RadioButton x:Name="DashboardHeadsetRadio" Content="Headset jack" GroupName="DashboardTarget" Foreground="#D6DDE8" IsChecked="True" Checked="DashboardTarget_Checked" />
                                                 <RadioButton x:Name="DashboardSpeakerRadio" Grid.Column="2" Content="Controller speaker" GroupName="DashboardTarget" Foreground="#D6DDE8" Checked="DashboardTarget_Checked" />
                                             </Grid>
+                                            <CheckBox x:Name="GameControllerCheckBox" Margin="0,12,0,0" Foreground="#D6DDE8" IsChecked="True"
+                                                      Checked="GameControllerCheckBox_Changed" Unchecked="GameControllerCheckBox_Changed"
+                                                      Content="Game controller (touchpad = mouse)"
+                                                      ToolTip="Uses ViGEmBus. Works without starting audio. Game rumble goes to the DualSense." />
+                                            <StackPanel Orientation="Horizontal" Margin="26,8,0,0">
+                                                <TextBlock Text="Games see:" Foreground="#A7ADB9" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                                <RadioButton x:Name="EmulateXboxRadio" GroupName="Emulation" Content="Xbox" Foreground="#D6DDE8" IsChecked="True" Checked="EmulationMode_Checked" Margin="0,0,16,0" />
+                                                <RadioButton x:Name="EmulatePlayStationRadio" GroupName="Emulation" Content="PlayStation" Foreground="#D6DDE8" Checked="EmulationMode_Checked"
+                                                             ToolTip="Emulates a DualShock 4 (ViGEm has no PS5 target) so games show PlayStation button prompts." />
+                                            </StackPanel>
+                                            <CheckBox x:Name="MicEnabledCheckBox" Margin="0,12,0,0" Foreground="#D6DDE8" IsChecked="True"
+                                                      Checked="MicEnabledCheckBox_Changed" Unchecked="MicEnabledCheckBox_Changed"
+                                                      Content="Microphone"
+                                                      ToolTip="Shows in Windows as &quot;DualSense Wireless Controller&quot; (Headset Microphone)." />
+                                            <StackPanel Orientation="Horizontal" Margin="26,8,0,0">
+                                                <CheckBox x:Name="NoiseRemovalCheckBox" Content="Noise removal" IsChecked="True" Margin="0,0,18,0"
+                                                          Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Filters fan/keyboard hum and silences the mic when you're not talking." />
+                                                <CheckBox x:Name="SidetoneCheckBox" Content="Hear myself" IsChecked="False"
+                                                          Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Sidetone: plays your own voice quietly in the headphones, like a PS5 headset." />
+                                            </StackPanel>
+                                            <CheckBox x:Name="HapticsCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Haptics from game sound (beta)"
+                                                      Checked="MicOption_Changed" Unchecked="MicOption_Changed" ToolTip="Feel game audio (bass, explosions) in the DualSense haptic motors." />
+                                            <CheckBox x:Name="BatteryLightCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Battery-colored light bar"
+                                                      ToolTip="Green when charged, yellow when half, red when low. Alerts at 20% and 10%." />
+                                            <CheckBox x:Name="StartupCheckBox" Margin="0,12,0,0" IsChecked="False" Content="Start with Windows (in tray)"
+                                                      Checked="StartupCheckBox_Changed" Unchecked="StartupCheckBox_Changed" />
 
                                             <Grid Margin="0,18,0,0">
                                                 <Grid.ColumnDefinitions>
@@ -500,7 +680,7 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Text="Volume" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock x:Name="DashboardVolumeText" Grid.Column="1" Text="100 / 127" Foreground="#AEB8C7" FontSize="12" />
+                                                <TextBlock x:Name="DashboardVolumeText" Grid.Column="1" Text="100 / 127" Foreground="#C9CFDB" FontSize="12" />
                                             </Grid>
                                             <Slider x:Name="DashboardVolumeSlider" Minimum="0" Maximum="127" Value="100" TickFrequency="1" ValueChanged="DashboardVolumeSlider_ValueChanged" Margin="0,8,0,0" />
                                         </StackPanel>
@@ -514,9 +694,9 @@
                                             </Grid.ColumnDefinitions>
                                             <StackPanel>
                                                 <TextBlock Text="Lightbar" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" />
-                                                <TextBlock x:Name="DashboardHexText" Text="#627CFF" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                                <TextBlock x:Name="DashboardHexText" Text="#61B0FF" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
                                             </StackPanel>
-                                            <Border x:Name="DashboardColorSwatch" Grid.Column="1" Width="38" Height="38" Background="#627CFF" CornerRadius="12" />
+                                            <Border x:Name="DashboardColorSwatch" Grid.Column="1" Width="38" Height="38" Background="#61B0FF" CornerRadius="12" />
                                         </Grid>
                                     </Border>
                                 </StackPanel>
@@ -535,30 +715,34 @@
 
                                 <Border Style="{StaticResource CardStyle}" Padding="18">
                                     <StackPanel>
-                                        <TextBlock Text="STATUS" Foreground="#657286" FontSize="10" FontWeight="Bold" />
-                                        <TextBlock x:Name="DashboardConnectionText" Text="Waiting" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
-                                        <TextBlock Text="HID channel" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <TextBlock Text="CONTROLLER" Foreground="#A7ADB9" FontSize="10" FontWeight="Bold" />
+                                        <TextBlock x:Name="TileControllerText" Text="Searching…" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
+                                        <TextBlock x:Name="TileControllerSub" Text="Bluetooth" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <!-- Kept for engine status updates; not shown. -->
+                                        <TextBlock x:Name="DashboardConnectionText" Visibility="Collapsed" />
                                     </StackPanel>
                                 </Border>
                                 <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="18">
                                     <StackPanel>
-                                        <TextBlock Text="REPORTS" Foreground="#657286" FontSize="10" FontWeight="Bold" />
-                                        <TextBlock x:Name="ReportsText" Text="0" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
-                                        <TextBlock Text="produced" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <TextBlock Text="GAMES" Foreground="#A7ADB9" FontSize="10" FontWeight="Bold" />
+                                        <TextBlock x:Name="TileGameText" Text="Off" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
+                                        <TextBlock Text="Controller emulation" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <TextBlock x:Name="ReportsText" Visibility="Collapsed" />
                                     </StackPanel>
                                 </Border>
                                 <Border Grid.Column="4" Style="{StaticResource CardStyle}" Padding="18">
                                     <StackPanel>
-                                        <TextBlock Text="HID QUEUE" Foreground="#657286" FontSize="10" FontWeight="Bold" />
-                                        <TextBlock x:Name="QueueText" Text="0 / 10" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
-                                        <TextBlock Text="packets" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <TextBlock Text="HEADSET AUDIO" Foreground="#A7ADB9" FontSize="10" FontWeight="Bold" />
+                                        <TextBlock x:Name="TileAudioText" Text="Off" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
+                                        <TextBlock x:Name="BufferText" Text="Press Start audio" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <TextBlock x:Name="QueueText" Visibility="Collapsed" />
                                     </StackPanel>
                                 </Border>
                                 <Border Grid.Column="6" Style="{StaticResource CardStyle}" Padding="18">
                                     <StackPanel>
-                                        <TextBlock Text="BUFFER PCM" Foreground="#657286" FontSize="10" FontWeight="Bold" />
-                                        <TextBlock x:Name="BufferText" Text="0.0 ms" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
-                                        <TextBlock Text="real time" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                        <TextBlock Text="MICROPHONE" Foreground="#A7ADB9" FontSize="10" FontWeight="Bold" />
+                                        <TextBlock x:Name="TileMicText" Text="Off" Foreground="{StaticResource TextBrush}" FontSize="17" FontWeight="SemiBold" Margin="0,7,0,0" />
+                                        <TextBlock Text="Hi-Fi Cable Output" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -608,18 +792,18 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
                                             <RadioButton x:Name="HeadsetRadio" GroupName="AudioTarget" IsChecked="True" Checked="AudioTarget_Checked">
-                                                <Border Background="#192235" BorderBrush="#2A3650" BorderThickness="1" CornerRadius="12" Padding="15">
+                                                <Border Background="#24FFFFFF" BorderBrush="#2A3650" BorderThickness="1" CornerRadius="12" Padding="15">
                                                     <StackPanel>
-                                                        <Path Data="{StaticResource IconHeadset}" Stroke="#91A0FF" StrokeThickness="1.7" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Left" />
+                                                        <Path Data="{StaticResource IconHeadset}" Stroke="#91C7FE" StrokeThickness="1.7" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Left" />
                                                         <TextBlock Text="Headset jack" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" Margin="0,9,0,0" />
                                                         <TextBlock Text="Connected to the controller" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,2,0,0" />
                                                     </StackPanel>
                                                 </Border>
                                             </RadioButton>
                                             <RadioButton x:Name="SpeakerRadio" Grid.Column="2" GroupName="AudioTarget" Checked="AudioTarget_Checked">
-                                                <Border Background="#192235" BorderBrush="#2A3650" BorderThickness="1" CornerRadius="12" Padding="15">
+                                                <Border Background="#24FFFFFF" BorderBrush="#2A3650" BorderThickness="1" CornerRadius="12" Padding="15">
                                                     <StackPanel>
-                                                        <Path Data="{StaticResource IconSpeaker}" Stroke="#91A0FF" StrokeThickness="1.7" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Left" />
+                                                        <Path Data="{StaticResource IconSpeaker}" Stroke="#91C7FE" StrokeThickness="1.7" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Left" />
                                                         <TextBlock Text="Controller speaker" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" Margin="0,9,0,0" />
                                                         <TextBlock Text="Built-in DualSense output" Foreground="{StaticResource MutedBrush}" FontSize="10" Margin="0,2,0,0" />
                                                     </StackPanel>
@@ -643,13 +827,13 @@
                                                 <ColumnDefinition Width="10" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <Button x:Name="StartAudioButton" Style="{StaticResource PrimaryButtonStyle}" Click="StartAudioButton_Click">
+                                            <Button x:Name="StartAudioButton" Visibility="Collapsed" Style="{StaticResource PrimaryButtonStyle}" Click="StartAudioButton_Click">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Path Data="{StaticResource IconPlay}" Fill="White" Width="13" Height="13" Stretch="Uniform" />
                                                     <TextBlock Text="Start session" Margin="8,0,0,0" />
                                                 </StackPanel>
                                             </Button>
-                                            <Button x:Name="StopAudioButton" Grid.Column="2" Style="{StaticResource DangerButtonStyle}" Click="StopAudioButton_Click" IsEnabled="False">
+                                            <Button x:Name="StopAudioButton" Visibility="Collapsed" Grid.Column="2" Style="{StaticResource DangerButtonStyle}" Click="StopAudioButton_Click" IsEnabled="False">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Path Data="{StaticResource IconStop}" Fill="#FF9AA5" Width="13" Height="13" Stretch="Uniform" />
                                                     <TextBlock Text="Stop" Margin="8,0,0,0" />
@@ -681,14 +865,14 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Style="{StaticResource CardStyle}" Margin="0,14,0,0" Background="#111C22" BorderBrush="#233A3E">
+                                    <Border Style="{StaticResource CardStyle}" Margin="0,14,0,0" Background="#1CFFFFFF" BorderBrush="#29FFFFFF">
                                         <StackPanel Orientation="Horizontal">
-                                            <Border Width="34" Height="34" Background="#17352F" CornerRadius="10">
+                                            <Border Width="34" Height="34" Background="#23FFFFFF" CornerRadius="10">
                                                 <Path Data="{StaticResource IconCheck}" Stroke="{StaticResource SuccessBrush}" StrokeThickness="2.2" Width="16" Height="16" Stretch="Uniform" />
                                             </Border>
                                             <StackPanel Margin="12,0,0,0">
                                                 <TextBlock Text="v5.5 engine preserved" Foreground="#DDF7ED" FontWeight="SemiBold" FontSize="13" />
-                                                <TextBlock Text="ClockFix, SendQueue, and Opus remain in the original core." Foreground="#82A89D" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,0" />
+                                                <TextBlock Text="ClockFix, SendQueue, and Opus remain in the original core." Foreground="#A3A9B5" FontSize="10" TextWrapping="Wrap" Margin="0,3,0,0" />
                                             </StackPanel>
                                         </StackPanel>
                                     </Border>
@@ -702,19 +886,19 @@
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Lighting" Style="{StaticResource SectionTitleStyle}" />
-                                <Border Background="#40321C" BorderBrush="#6A5126" BorderThickness="1" CornerRadius="7" Padding="8,3" Margin="10,2,0,0" VerticalAlignment="Top">
+                                <Border Background="#27FFFFFF" BorderBrush="#6A5126" BorderThickness="1" CornerRadius="7" Padding="8,3" Margin="10,2,0,0" VerticalAlignment="Top">
                                     <TextBlock Text="BETA" Foreground="#FFCF7A" FontSize="9" FontWeight="Bold" />
                                 </Border>
                             </StackPanel>
                             <TextBlock Text="Experimental controls for the lightbar and player indicators." Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,5,0,0" />
 
-                            <Border Background="#211B15" BorderBrush="#5A4327" BorderThickness="1" CornerRadius="12" Padding="15,12" Margin="0,14,0,0">
+                            <Border Background="#1DFFFFFF" BorderBrush="#5A4327" BorderThickness="1" CornerRadius="12" Padding="15,12" Margin="0,14,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Border Width="36" Height="36" Background="#3B2D1C" CornerRadius="10">
+                                    <Border Width="36" Height="36" Background="#26FFFFFF" CornerRadius="10">
                                         <Path Data="{StaticResource IconActivity}" Stroke="#FFBF5F" StrokeThickness="2" Width="18" Height="18" Stretch="Uniform" />
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0">
@@ -729,7 +913,7 @@
                                 </Grid>
                             </Border>
 
-                            <Border x:Name="LightingOwnershipCard" Background="#142129" BorderBrush="#27414B" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,14,0,0">
+                            <Border x:Name="LightingOwnershipCard" Background="#1FFFFFFF" BorderBrush="#27414B" BorderThickness="1" CornerRadius="12" Padding="16,12" Margin="0,14,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -739,7 +923,7 @@
                                         <TextBlock Text="Experimental lighting control" Foreground="{StaticResource TextBrush}" FontSize="14" FontWeight="SemiBold" />
                                         <TextBlock x:Name="LightingOwnershipStateText"
                                                    Text="Disabled. DSX will continue controlling the lighting."
-                                                   Foreground="#8DB1AA"
+                                                   Foreground="#AEB4C0"
                                                    FontSize="11"
                                                    TextWrapping="Wrap"
                                                    Margin="0,4,18,0" />
@@ -763,7 +947,7 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <Border Style="{StaticResource CardStyle}" Background="#101726" MinHeight="490">
+                                <Border Style="{StaticResource CardStyle}" Background="#1DFFFFFF" MinHeight="490">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" />
@@ -784,7 +968,7 @@
 
                                         <Viewbox Grid.Row="1" Stretch="Uniform" Margin="6,2">
                                             <Canvas Width="620" Height="350">
-                                                <Ellipse x:Name="LightingGlow" Width="470" Height="125" Canvas.Left="75" Canvas.Top="212" Fill="#263476" Opacity="0.68">
+                                                <Ellipse x:Name="LightingGlow" Width="470" Height="125" Canvas.Left="75" Canvas.Top="212" Fill="#0059B2" Opacity="0.68">
                                                     <Ellipse.Effect>
                                                         <BlurEffect Radius="48" />
                                                     </Ellipse.Effect>
@@ -797,28 +981,28 @@
                                                        Stretch="Uniform"
                                                        RenderOptions.BitmapScalingMode="HighQuality" />
                                                 <StackPanel x:Name="PlayerLedPreview" Visibility="Collapsed" Orientation="Horizontal">
-                                                    <Ellipse Width="6" Height="6" Fill="#8B9AFF" Margin="2" />
-                                                    <Ellipse Width="6" Height="6" Fill="#263043" Margin="2" />
-                                                    <Ellipse Width="6" Height="6" Fill="#263043" Margin="2" />
-                                                    <Ellipse Width="6" Height="6" Fill="#263043" Margin="2" />
-                                                    <Ellipse Width="6" Height="6" Fill="#263043" Margin="2" />
+                                                    <Ellipse Width="6" Height="6" Fill="#8AC4FF" Margin="2" />
+                                                    <Ellipse Width="6" Height="6" Fill="#2BFFFFFF" Margin="2" />
+                                                    <Ellipse Width="6" Height="6" Fill="#2BFFFFFF" Margin="2" />
+                                                    <Ellipse Width="6" Height="6" Fill="#2BFFFFFF" Margin="2" />
+                                                    <Ellipse Width="6" Height="6" Fill="#2BFFFFFF" Margin="2" />
                                                 </StackPanel>
                                             </Canvas>
                                         </Viewbox>
 
-                                        <Border Grid.Row="2" Background="#151E2D" CornerRadius="12" Padding="14">
+                                        <Border Grid.Row="2" Background="#20FFFFFF" CornerRadius="12" Padding="14">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <Border x:Name="LightingColorSwatch" Width="42" Height="42" CornerRadius="12" Background="#627CFF" />
+                                                <Border x:Name="LightingColorSwatch" Width="42" Height="42" CornerRadius="12" Background="#61B0FF" />
                                                 <StackPanel Grid.Column="1" Margin="12,0,0,0">
                                                 <TextBlock Text="Current color" Foreground="{StaticResource MutedBrush}" FontSize="10" />
-                                                    <TextBlock x:Name="LightingHexLabel" Text="#627CFF" Foreground="{StaticResource TextBrush}" FontSize="15" FontWeight="SemiBold" Margin="0,3,0,0" />
+                                                    <TextBlock x:Name="LightingHexLabel" Text="#61B0FF" Foreground="{StaticResource TextBrush}" FontSize="15" FontWeight="SemiBold" Margin="0,3,0,0" />
                                                 </StackPanel>
-                                                <TextBlock Grid.Column="2" Text="RGB" Foreground="#657286" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="2" Text="RGB" Foreground="#848A96" FontSize="10" FontWeight="Bold" VerticalAlignment="Center" />
                                             </Grid>
                                         </Border>
                                     </Grid>
@@ -846,12 +1030,12 @@
                                             <Grid Margin="0,14,0,0">
                                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                                 <TextBlock Text="Blue" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock x:Name="BlueValueText" Grid.Column="1" Text="255" Foreground="#8FA2FF" FontSize="12" />
+                                                <TextBlock x:Name="BlueValueText" Grid.Column="1" Text="255" Foreground="#8FC6FE" FontSize="12" />
                                             </Grid>
                                             <Slider x:Name="BlueSlider" Minimum="0" Maximum="255" Value="255" ValueChanged="ColorSlider_ValueChanged" Margin="0,7,0,0" />
 
                                             <TextBlock Text="HEX" Style="{StaticResource LabelStyle}" Margin="0,17,0,7" />
-                                            <TextBox x:Name="HexTextBox" Text="#627CFF" LostFocus="HexTextBox_LostFocus" KeyDown="HexTextBox_KeyDown" />
+                                            <TextBox x:Name="HexTextBox" Text="#61B0FF" LostFocus="HexTextBox_LostFocus" KeyDown="HexTextBox_KeyDown" />
 
                                             <Grid Margin="0,18,0,0">
                                                 <Grid.ColumnDefinitions>
@@ -902,12 +1086,12 @@
                                         <StackPanel>
                                             <TextBlock Text="Quick colors" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="13" />
                                             <WrapPanel Margin="0,13,0,0">
-                                                <Button Tag="627CFF" Click="ColorPresetButton_Click" Width="34" Height="34" Background="#627CFF" BorderThickness="0" Margin="0,0,8,8" ToolTip="Blue" />
-                                                <Button Tag="4DDEB5" Click="ColorPresetButton_Click" Width="34" Height="34" Background="#4DDEB5" BorderThickness="0" Margin="0,0,8,8" ToolTip="Green" />
-                                                <Button Tag="FF5F77" Click="ColorPresetButton_Click" Width="34" Height="34" Background="#FF5F77" BorderThickness="0" Margin="0,0,8,8" ToolTip="Red" />
-                                                <Button Tag="B56CFF" Click="ColorPresetButton_Click" Width="34" Height="34" Background="#B56CFF" BorderThickness="0" Margin="0,0,8,8" ToolTip="Purple" />
-                                                <Button Tag="FFB24D" Click="ColorPresetButton_Click" Width="34" Height="34" Background="#FFB24D" BorderThickness="0" Margin="0,0,8,8" ToolTip="Amber" />
-                                                <Button Tag="FFFFFF" Click="ColorPresetButton_Click" Width="34" Height="34" Background="#FFFFFF" BorderThickness="0" Margin="0,0,8,8" ToolTip="White" />
+                                                <Button Tag="627CFF" Click="ColorPresetButton_Click" Style="{StaticResource SwatchStyle}" Background="#627CFF" ToolTip="Blue" />
+                                                <Button Tag="4DDEB5" Click="ColorPresetButton_Click" Style="{StaticResource SwatchStyle}" Background="#4DDEB5" ToolTip="Green" />
+                                                <Button Tag="FF5F77" Click="ColorPresetButton_Click" Style="{StaticResource SwatchStyle}" Background="#FF5F77" ToolTip="Red" />
+                                                <Button Tag="B56CFF" Click="ColorPresetButton_Click" Style="{StaticResource SwatchStyle}" Background="#B56CFF" ToolTip="Purple" />
+                                                <Button Tag="FFB24D" Click="ColorPresetButton_Click" Style="{StaticResource SwatchStyle}" Background="#FFB24D" ToolTip="Amber" />
+                                                <Button Tag="FFFFFF" Click="ColorPresetButton_Click" Style="{StaticResource SwatchStyle}" Background="#FFFFFF" ToolTip="White" />
                                             </WrapPanel>
                                         </StackPanel>
                                     </Border>
@@ -915,6 +1099,9 @@
                             </Grid>
                         </StackPanel>
                     </ScrollViewer>
+
+                    <!-- CONTROLLER LIVE VIEW (content set in code) -->
+                    <ContentControl x:Name="ControllerPage" Visibility="Collapsed" />
 
                     <!-- DIAGNOSTICS -->
                     <Grid x:Name="DiagnosticsPage" Visibility="Collapsed">
@@ -933,6 +1120,9 @@
                                 <TextBlock Text="Real-time logs from the engine, WASAPI, Opus, and the HID queue." Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,5,0,0" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <Button Style="{StaticResource SecondaryButtonStyle}" Padding="13,9" Margin="0,0,8,0" Click="MicProbeButton_Click" ToolTip="Experimental: enable the controller mic and record what it sends over Bluetooth">
+                                    <TextBlock Text="Mic probe (beta)" />
+                                </Button>
                                 <Button Style="{StaticResource SecondaryButtonStyle}" Padding="13,9" Click="ClearLogButton_Click">
                                     <StackPanel Orientation="Horizontal">
                                         <Path Data="{StaticResource IconTrash}" Stroke="#BFC8D7" StrokeThickness="1.7" Width="14" Height="14" Stretch="Uniform" />
@@ -948,23 +1138,23 @@
                             </StackPanel>
                         </Grid>
 
-                        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0" Background="#090D13">
+                        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0" Background="#15FFFFFF">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="44" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
-                                <Border Background="#101721" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" CornerRadius="18,18,0,0">
+                                <Border Background="#1BFFFFFF" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" CornerRadius="18,18,0,0">
                                     <Grid Margin="16,0">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                             <Ellipse Width="8" Height="8" Fill="#FF6B7A" Margin="0,0,7,0" />
                                             <Ellipse Width="8" Height="8" Fill="#FFB24D" Margin="0,0,7,0" />
                                             <Ellipse Width="8" Height="8" Fill="#54D6A4" Margin="0,0,13,0" />
-                                            <TextBlock Text="DualSenseBtAudio · session" Foreground="#7F8B9D" FontFamily="Consolas" FontSize="11" />
+                                            <TextBlock Text="DualSenseBtAudio · session" Foreground="#9DA3AF" FontFamily="Consolas" FontSize="11" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
-                                <TextBox x:Name="DiagnosticsLog" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" Background="#090D13" BorderThickness="0" Foreground="#B7C3D3" Padding="18" />
+                                <TextBox x:Name="DiagnosticsLog" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" Background="#15FFFFFF" BorderThickness="0" Foreground="#B7C3D3" Padding="18" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -1003,10 +1193,10 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Background="#151820" BorderBrush="#35303A">
+                                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Background="#1CFFFFFF" BorderBrush="#2BFFFFFF">
                                     <StackPanel>
                                         <TextBlock Text="Important note" Foreground="#FFD4A0" FontSize="16" FontWeight="SemiBold" />
-                                        <TextBlock Text="Changing the buffer or period can cause crackling, underflows, or interrupted HID writes. If performance gets worse, restore the defaults: Full39, buffer 64, and 21.333333 ms." Foreground="#BCA98E" FontSize="12" TextWrapping="Wrap" LineHeight="20" Margin="0,13,0,0" />
+                                        <TextBlock Text="Changing the buffer or period can cause crackling, underflows, or interrupted HID writes. If performance gets worse, restore the defaults: Full39, buffer 64, and 21.333333 ms." Foreground="#B4BAC6" FontSize="12" TextWrapping="Wrap" LineHeight="20" Margin="0,13,0,0" />
                                         <Button Style="{StaticResource SecondaryButtonStyle}" Margin="0,22,0,0" HorizontalAlignment="Left" Click="RestoreDefaultsButton_Click">
                                             <StackPanel Orientation="Horizontal">
                                                 <Path Data="{StaticResource IconRefresh}" Fill="#C7D0DE" Width="14" Height="14" Stretch="Uniform" />
@@ -1027,7 +1217,7 @@
                                         <TextBlock Text="Protected architecture" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="14" />
                                         <TextBlock Text="The interface and engine run separately. Audio continues to use SendQueue, ClockFix, and high priority." Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,4,0,0" />
                                     </StackPanel>
-                                    <Border Grid.Column="1" Background="#17352F" CornerRadius="12" Padding="13,7">
+                                    <Border Grid.Column="1" Background="#23FFFFFF" CornerRadius="12" Padding="13,7">
                                         <TextBlock Text="v0.0.1 UI · CORE v5.5" Foreground="{StaticResource SuccessBrush}" FontSize="10" FontWeight="Bold" />
                                     </Border>
                                 </Grid>
@@ -1036,6 +1226,15 @@
                     </ScrollViewer>
                 </Grid>
             </Grid>
+
+            <!-- PS5-style focus ring for controller navigation; follows the focused control. -->
+            <Canvas x:Name="FocusOverlay" Grid.RowSpan="2" IsHitTestVisible="False">
+                <Border x:Name="FocusRing" BorderBrush="White" BorderThickness="3" CornerRadius="12" Visibility="Collapsed">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="18" ShadowDepth="0" Color="#7FB8FF" Opacity="0.9" />
+                    </Border.Effect>
+                </Border>
+            </Canvas>
         </Grid>
     </Border>
 </Window>
