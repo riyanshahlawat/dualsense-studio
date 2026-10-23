@@ -57,6 +57,7 @@ public partial class MainWindow
         _tray.ContextMenuStrip.Items.Add("Open DualSense Studio", null, (_, _) => ShowFromTray());
         _trayPower = new Forms.ToolStripMenuItem("Stop", null, (_, _) => Dispatcher.Invoke(TogglePower));
         _tray.ContextMenuStrip.Items.Add(_trayPower);
+        _tray.ContextMenuStrip.Items.Add("Check for updates", null, (_, _) => Dispatcher.Invoke(() => _ = CheckForUpdateOnceAsync(manual: true)));
         _tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
         _tray.ContextMenuStrip.Items.Add("Exit", null, (_, _) => Dispatcher.Invoke(ExitApp));
         _tray.DoubleClick += (_, _) => ShowFromTray();
@@ -71,20 +72,37 @@ public partial class MainWindow
 
     private Services.UpdateChecker.UpdateInfo? _update;
 
-    // Auto-update: check GitHub shortly after start, then show a button + tray note.
+    // Auto-update: check GitHub shortly after start and every 6 hours, then show a button + tray note.
     private async Task CheckForUpdateAsync()
     {
         await Task.Delay(TimeSpan.FromSeconds(8));
+        while (!_exiting)
+        {
+            if (await CheckForUpdateOnceAsync(manual: false))
+            {
+                return;
+            }
+            await Task.Delay(TimeSpan.FromHours(6));
+        }
+    }
+
+    private async Task<bool> CheckForUpdateOnceAsync(bool manual)
+    {
         _update = await Services.UpdateChecker.CheckAsync();
         if (_update is null)
         {
-            return;
+            if (manual)
+            {
+                _tray?.ShowBalloonTip(2500, "DualSense Studio", $"You're up to date (v{Services.UpdateChecker.CurrentVersion.ToString(3)}).", Forms.ToolTipIcon.Info);
+            }
+            return false;
         }
 
         UpdateButtonText.Text = $"Update to v{_update.Version}";
         UpdateButton.Visibility = Visibility.Visible;
         AppendLog($"Update available: v{_update.Version}.");
         _tray?.ShowBalloonTip(4000, "DualSense Studio update", $"Version {_update.Version} is available. Open the app and click Update.", Forms.ToolTipIcon.Info);
+        return true;
     }
 
     private async void UpdateButton_Click(object sender, RoutedEventArgs e)
