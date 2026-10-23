@@ -120,6 +120,7 @@ internal sealed class MicBridge : IDisposable
     public static MicBridge Start(string? targetName = null)
     {
         var bridge = new MicBridge(targetName ?? DefaultTargetName);
+        EchoCanceller.Start();
         bridge._output.Play();
         bridge._thread.Start();
         Console.WriteLine($"Mic: DualSense mic -> \"{bridge._target.FriendlyName}\".");
@@ -191,6 +192,9 @@ internal sealed class MicBridge : IDisposable
                     _decodeErrors++;
                     continue;
                 }
+
+                // Remove headphone echo first (before noise removal and limiting).
+                EchoCanceller.Process(pcm, decoded);
 
                 if (NoiseRemoval)
                 {
@@ -347,6 +351,7 @@ internal sealed class MicBridge : IDisposable
     {
         _stopping = true;
         _thread.Join(500);
+        EchoCanceller.Stop();
         SendMicOpen(false);
         _output.Stop();
         _output.Dispose();

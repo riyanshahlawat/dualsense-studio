@@ -208,6 +208,10 @@ internal sealed class EngineProcessService : IDisposable
             startInfo.ArgumentList.Add("--lightbar-off");
         }
 
+        // The engine exits by itself if this app closes or crashes.
+        startInfo.ArgumentList.Add("--parent-pid");
+        startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));
+
         // No --device: the engine captures the current Windows default output,
         // so whatever is picked in the Windows sound menu plays on the controller.
     }

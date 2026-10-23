@@ -218,7 +218,17 @@ public partial class MainWindow
             _tray.Visible = false;
             _tray.Dispose();
         }
+
+        // Exit means everything stops: virtual controllers, audio and mic.
+        RemoveAllGamepads();
+        foreach (var engine in System.Diagnostics.Process.GetProcessesByName("DualSenseBtAudio"))
+        {
+            try { engine.Kill(); } catch { }
+        }
+
+        _allowClose = true;
         Close();
+        Application.Current.Shutdown();
     }
 
     // Close button hides to the tray; real exit is from the tray menu.

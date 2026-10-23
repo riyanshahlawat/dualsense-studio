@@ -13,6 +13,28 @@ using OpusSharp.Core.Extensions;
 
 internal static class Program
 {
+    // Exits this engine when the app process (parent) is gone.
+    private static void WatchParent(int parentPid)
+    {
+        Process parent;
+        try
+        {
+            parent = Process.GetProcessById(parentPid);
+        }
+        catch (ArgumentException)
+        {
+            Environment.Exit(0);
+            return;
+        }
+
+        new Thread(() =>
+        {
+            parent.WaitForExit();
+            Environment.Exit(0);
+        })
+        { IsBackground = true, Name = "ParentWatch" }.Start();
+    }
+
     private static int Main(string[] args)
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
@@ -84,6 +106,15 @@ internal static class Program
             DualSenseAudioEngine.LowLatency = args.Contains("--low-latency", StringComparer.OrdinalIgnoreCase);
             string[] appFlags = { "--mic", "--noise-removal", "--sidetone", "--haptics", "--low-latency" };
             args = args.Where(a => !appFlags.Contains(a, StringComparer.OrdinalIgnoreCase)).ToArray();
+
+            // --parent-pid N: exit as soon as DualSense Studio closes or crashes, so the
+            // mic and headphone audio never keep running without the app.
+            int parentIndex = Array.FindIndex(args, a => a.Equals("--parent-pid", StringComparison.OrdinalIgnoreCase));
+            if (parentIndex >= 0 && parentIndex + 1 < args.Length && int.TryParse(args[parentIndex + 1], out int parentPid))
+            {
+                WatchParent(parentPid);
+                args = args.Where((_, i) => i != parentIndex && i != parentIndex + 1).ToArray();
+            }
 
             Options options = Options.Parse(args);
 
@@ -635,6 +666,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
                     playEnergy += inputSamples[i] * inputSamples[i];
                 }
                 MicBridge.PlaybackLevel = MathF.Sqrt(playEnergy / Math.Max(1, inputSamples.Length));
+                EchoCanceller.AddPlayback(inputSamples);
 
                 MicBridge.MixSidetone(inputSamples);
                 _lastInputWindow = inputSamples;

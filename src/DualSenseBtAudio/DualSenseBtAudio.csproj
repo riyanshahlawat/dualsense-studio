@@ -6,10 +6,10 @@
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU</Platforms>
     <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
-    <Version>1.0.4</Version>
-    <AssemblyVersion>1.0.4.0</AssemblyVersion>
-    <FileVersion>1.0.4.0</FileVersion>
-    <InformationalVersion>1.0.4</InformationalVersion>
+    <Version>1.0.5</Version>
+    <AssemblyVersion>1.0.5.0</AssemblyVersion>
+    <FileVersion>1.0.5.0</FileVersion>
+    <InformationalVersion>1.0.5</InformationalVersion>
     <Product>DualSense Bluetooth Audio</Product>
     <Authors>DualSense Bluetooth Audio contributors</Authors>
     <Description>Bluetooth audio engine and HID protocol implementation for DualSense.</Description>
@@ -22,6 +22,8 @@
     <PackageReference Include="hidapi-VC.Redist" Version="0.15.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="OpusSharp" Version="1.6.1" />
+    <PackageReference Include="SpeexDSPSharp" Version="1.3.0" />
+    <PackageReference Include="SpeexDSPSharp.Natives" Version="1.3.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../Shared/AudioPolicy.cs" Link="AudioPolicy.cs" />
