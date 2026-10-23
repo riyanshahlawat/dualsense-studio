@@ -1,4 +1,5 @@
 @echo off
+set /p APPVER=<"%~dp0VERSION.txt"
 setlocal EnableExtensions
 cd /d "%~dp0"
 
@@ -12,7 +13,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-echo Building both v0.0.1 architectures...
+echo Building both v%APPVER% architectures...
 
 call BUILD_RUNTIME.bat win-x64
 if errorlevel 1 goto :error
@@ -25,7 +26,7 @@ if errorlevel 1 goto :error
 
 echo.
 echo ============================================================
-echo DUALSENSE BLUETOOTH AUDIO v0.0.1 BUILT
+echo DUALSENSE BLUETOOTH AUDIO v%APPVER% BUILT
 echo.
 echo x64: %CD%\build\win-x64\DualSenseAudioStudio.exe
 echo x86: %CD%\build\win-x86\DualSenseAudioStudio.exe

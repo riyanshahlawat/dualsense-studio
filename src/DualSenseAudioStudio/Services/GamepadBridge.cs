@@ -352,8 +352,13 @@ internal sealed class GamepadBridge : IDisposable
 
     public void Dispose()
     {
+        // The worker owns the HID device (closed by its using block); wait for it to
+        // finish (reads time out every 100 ms) before disconnecting the virtual pad it uses.
         _running = false;
-        _thread.Join(500);
+        if (!_thread.Join(TimeSpan.FromSeconds(3)))
+        {
+            return; // never dispose under a running worker
+        }
         try { _pad?.Disconnect(); } catch { }
         try { _ds4?.Disconnect(); } catch { }
         _client.Dispose();

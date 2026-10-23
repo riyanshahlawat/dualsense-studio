@@ -15,7 +15,7 @@ internal static class MicProbe
         Console.WriteLine("Keep the controller still during the probe.");
         Console.WriteLine();
 
-        using var hid = new Device(ProtocolConstants.VendorId, ProtocolConstants.ProductId);
+        using var hid = ProtocolConstants.OpenController();
 
         Console.WriteLine($"Phase 1: baseline for {BaselineSeconds}s, stay silent...");
         ProbeStats baseline = Listen(hid, BaselineSeconds);

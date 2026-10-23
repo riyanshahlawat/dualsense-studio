@@ -1,4 +1,5 @@
 @echo off
+set /p APPVER=<"%~dp0VERSION.txt"
 setlocal EnableExtensions
 cd /d "%~dp0"
 
@@ -20,7 +21,7 @@ set "OUTPUT_DIR=%CD%\build\%RUNTIME%"
 
 echo.
 echo ============================================================
-echo Publishing DualSense Bluetooth Audio v0.0.1 for %RUNTIME%
+echo Publishing DualSense Bluetooth Audio v%APPVER% for %RUNTIME%
 echo ============================================================
 
 if exist "%OUTPUT_DIR%" rmdir /s /q "%OUTPUT_DIR%"

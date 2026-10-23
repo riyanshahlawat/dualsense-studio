@@ -37,6 +37,9 @@
     <Resource Include="Assets\DualSense.png" />
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="DualSenseStudio.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Remove="System.Windows.Forms" />
     <Using Remove="System.Drawing" />
   </ItemGroup>

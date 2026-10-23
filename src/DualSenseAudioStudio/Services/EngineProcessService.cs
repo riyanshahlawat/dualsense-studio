@@ -209,6 +209,13 @@ internal sealed class EngineProcessService : IDisposable
             startInfo.ArgumentList.Add("--lightbar-off");
         }
 
+        // Audio and mic target Player 1's exact controller (not just "the first DualSense").
+        if (!string.IsNullOrEmpty(options.ControllerPath))
+        {
+            startInfo.ArgumentList.Add("--hid-path");
+            startInfo.ArgumentList.Add(options.ControllerPath);
+        }
+
         // The engine exits by itself if this app closes or crashes.
         startInfo.ArgumentList.Add("--parent-pid");
         startInfo.ArgumentList.Add(Environment.ProcessId.ToString(CultureInfo.InvariantCulture));

@@ -273,6 +273,7 @@ public partial class MainWindow : Window
                 Sidetone = false,
                 Haptics = HapticsCheckBox.IsChecked == true,
                 LowLatency = LowLatencyCheckBox.IsChecked == true,
+                ControllerPath = _gamepad?.DevicePath,
                 ControlFile = _controlFile.FilePath
             };
 

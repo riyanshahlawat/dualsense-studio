@@ -1,8 +1,9 @@
 @echo off
+set /p APPVER=<"%~dp0VERSION.txt"
 setlocal
 cd /d "%~dp0"
 
-echo Checking v0.0.1 publications...
+echo Checking v%APPVER% publications...
 echo.
 
 for %%R in (win-x64 win-x86) do (

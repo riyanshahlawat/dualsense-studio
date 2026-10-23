@@ -644,8 +644,9 @@
                                     <Border Style="{StaticResource CardStyle}">
                                         <StackPanel>
                                             <TextBlock Text="Quick setup" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold" FontSize="15" />
-                                            <TextBlock Text="Captured output" Style="{StaticResource LabelStyle}" Margin="0,18,0,7" />
-                                            <ComboBox x:Name="DashboardDeviceCombo" DisplayMemberPath="DisplayName" SelectionChanged="DashboardDeviceCombo_SelectionChanged" />
+                                            <TextBlock Text="Sound source" Style="{StaticResource LabelStyle}" Margin="0,18,0,7" />
+                                            <TextBlock Text="Plays whatever you pick in the Windows sound menu (normally &quot;DualSense Wireless Controller&quot;)." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="12" />
+                                            <ComboBox x:Name="DashboardDeviceCombo" Visibility="Collapsed" DisplayMemberPath="DisplayName" SelectionChanged="DashboardDeviceCombo_SelectionChanged" />
 
                                             <TextBlock Text="Controller output" Style="{StaticResource LabelStyle}" Margin="0,16,0,7" />
                                             <Grid>
@@ -794,9 +795,9 @@
                                             </Grid.ColumnDefinitions>
                                             <StackPanel>
                                                 <TextBlock Text="Routing" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold" />
-                                                <TextBlock Text="WASAPI loopback to the Bluetooth protocol" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
+                                                <TextBlock Text="Windows sound output to the controller over Bluetooth" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,3,0,0" />
                                             </StackPanel>
-                                            <Button Grid.Column="1" Style="{StaticResource SecondaryButtonStyle}" Padding="12,8" Click="RefreshDevicesButton_Click">
+                                            <Button Grid.Column="1" Visibility="Collapsed" Style="{StaticResource SecondaryButtonStyle}" Padding="12,8" Click="RefreshDevicesButton_Click">
                                                 <StackPanel Orientation="Horizontal">
                                                     <Path Data="{StaticResource IconRefresh}" Fill="#BFC8D7" Width="14" Height="14" Stretch="Uniform" />
                                                     <TextBlock Text="Refresh" Margin="7,0,0,0" />
@@ -804,8 +805,9 @@
                                             </Button>
                                         </Grid>
 
-                                        <TextBlock Text="Windows output" Style="{StaticResource LabelStyle}" Margin="0,22,0,8" />
-                                        <ComboBox x:Name="AudioDeviceCombo" DisplayMemberPath="DisplayName" SelectionChanged="AudioDeviceCombo_SelectionChanged" />
+                                        <TextBlock Text="Sound source" Style="{StaticResource LabelStyle}" Margin="0,22,0,8" />
+                                        <TextBlock Text="Follows your Windows sound output automatically: choose it in the Windows sound menu." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="12" />
+                                        <ComboBox x:Name="AudioDeviceCombo" Visibility="Collapsed" DisplayMemberPath="DisplayName" SelectionChanged="AudioDeviceCombo_SelectionChanged" />
 
                                         <TextBlock Text="Destination" Style="{StaticResource LabelStyle}" Margin="0,20,0,10" />
                                         <Grid>
@@ -1198,8 +1200,8 @@
                                 <Border Style="{StaticResource CardStyle}">
                                     <StackPanel>
                                         <TextBlock Text="Protocol" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold" />
-                                        <TextBlock Text="Report mode" Style="{StaticResource LabelStyle}" Margin="0,20,0,8" />
-                                        <ComboBox x:Name="ProtocolCombo" SelectionChanged="AdvancedOption_Changed">
+                                        <TextBlock Text="Single-packet mode every 10.7 ms (fixed: the only mode that plays smoothly over Bluetooth)." TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,12,0,0" />
+                                        <ComboBox x:Name="ProtocolCombo" Visibility="Collapsed" SelectionChanged="AdvancedOption_Changed">
                                             <ComboBoxItem Content="Legacy35 · smooth (recommended)" Tag="Legacy35" IsSelected="True" />
                                         </ComboBox>
 
@@ -1210,8 +1212,7 @@
                                         </Grid>
                                         <Slider x:Name="BufferLengthSlider" Minimum="1" Maximum="127" Value="64" TickFrequency="1" ValueChanged="BufferLengthSlider_ValueChanged" Margin="0,9,0,0" />
 
-                                        <TextBlock Text="Send period (ms)" Style="{StaticResource LabelStyle}" Margin="0,20,0,8" />
-                                        <TextBox x:Name="PeriodTextBox" Text="21.333333" LostFocus="AdvancedTextBox_LostFocus" />
+                                        <TextBox x:Name="PeriodTextBox" Visibility="Collapsed" Text="10.666667" LostFocus="AdvancedTextBox_LostFocus" />
                                     </StackPanel>
                                 </Border>
 

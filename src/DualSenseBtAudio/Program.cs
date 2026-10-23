@@ -119,6 +119,14 @@ internal static class Program
                 args = args.Where((_, i) => i != parentIndex && i != parentIndex + 1).ToArray();
             }
 
+            // --hid-path P: use exactly this controller for audio and mic.
+            int pathIndex = Array.FindIndex(args, a => a.Equals("--hid-path", StringComparison.OrdinalIgnoreCase));
+            if (pathIndex >= 0 && pathIndex + 1 < args.Length)
+            {
+                ProtocolConstants.ControllerPath = args[pathIndex + 1];
+                args = args.Where((_, i) => i != pathIndex && i != pathIndex + 1).ToArray();
+            }
+
             Options options = Options.Parse(args);
 
             if (options.Help)
@@ -248,6 +256,12 @@ internal enum ProtocolVariant
 
 internal static class ProtocolConstants
 {
+    // Exact controller to use (from --hid-path); null = first DualSense found.
+    public static string? ControllerPath;
+
+    public static HidApi.Device OpenController() =>
+        ControllerPath is null ? new HidApi.Device(VendorId, ProductId) : new HidApi.Device(ControllerPath);
+
     public const int VendorId = 0x054C;
     public const int ProductId = 0x0CE6;
 
@@ -322,9 +336,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
             $"Opening DualSense HID " +
             $"{ProtocolConstants.VendorId:X4}:{ProtocolConstants.ProductId:X4}...");
 
-        _hid = new Device(
-            ProtocolConstants.VendorId,
-            ProtocolConstants.ProductId);
+        _hid = ProtocolConstants.OpenController();
 
         _encoder = new OpusEncoder(
             ProtocolConstants.SampleRate,

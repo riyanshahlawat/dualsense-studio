@@ -15,4 +15,9 @@ if not exist "%ISCC%" (
 
 "%ISCC%" /Q "%~dp0installer\DualSenseStudio.iss"
 if errorlevel 1 exit /b 1
+
+rem SHA-256 checksum next to the installer; the in-app updater refuses updates without it.
+powershell -NoProfile -Command "$h=(Get-FileHash -Algorithm SHA256 '%~dp0release\DualSenseStudio-Setup.exe').Hash.ToLower(); Set-Content -NoNewline -Encoding ascii '%~dp0release\DualSenseStudio-Setup.exe.sha256' ($h + '  DualSenseStudio-Setup.exe')"
+if errorlevel 1 exit /b 1
 echo Installer: %CD%\release\DualSenseStudio-Setup.exe
+echo Checksum:  %CD%\release\DualSenseStudio-Setup.exe.sha256

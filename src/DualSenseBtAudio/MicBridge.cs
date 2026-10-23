@@ -95,7 +95,7 @@ internal sealed class MicBridge : IDisposable
         _output = new WasapiOut(_target, AudioClientShareMode.Shared, true, 10);
         _output.Init(_buffer);
 
-        _hid = new Device(ProtocolConstants.VendorId, ProtocolConstants.ProductId);
+        _hid = ProtocolConstants.OpenController(); // same controller as the audio
         _thread = new Thread(Run) { IsBackground = true, Name = "MicBridge", Priority = ThreadPriority.AboveNormal };
     }
 
@@ -395,8 +395,16 @@ internal sealed class MicBridge : IDisposable
 
     public void Dispose()
     {
+        // Deterministic shutdown: signal the worker, wait for it to finish (its HID read
+        // times out every 50 ms), and only then release what it was using.
         _stopping = true;
-        _thread.Join(500);
+        if (!_thread.Join(TimeSpan.FromSeconds(3)))
+        {
+            // Should never happen; leaking is safer than disposing under a running thread.
+            Console.WriteLine("Mic: worker did not stop in time; leaving its resources to process exit.");
+            return;
+        }
+
         EchoCanceller.Stop();
         SendMicOpen(false);
         _output.Stop();

@@ -27,6 +27,10 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      - name: Unit tests
+        if: matrix.runtime == 'win-x64'
+        run: dotnet test tests/DualSenseStudio.Tests/DualSenseStudio.Tests.csproj --nologo
+
       - name: Publish
         shell: cmd
         run: BUILD_RUNTIME.bat ${{ matrix.runtime }}
@@ -34,6 +38,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: DualSense-Bluetooth-Audio_v0.0.1_${{ matrix.runtime }}
+          name: DualSense-Studio_${{ matrix.runtime }}
           path: build/${{ matrix.runtime }}/**
           if-no-files-found: error

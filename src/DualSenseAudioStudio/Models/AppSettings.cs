@@ -55,6 +55,8 @@ internal sealed record EngineLaunchOptions
     public bool Sidetone { get; init; }
     public bool Haptics { get; init; }
     public bool LowLatency { get; init; }
+    // Exact HID path of Player 1's controller: audio and mic go to this one controller.
+    public string? ControllerPath { get; init; }
     public required string ControlFile { get; init; }
 }
 
