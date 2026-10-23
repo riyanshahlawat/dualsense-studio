@@ -11,10 +11,10 @@
     <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
     <AssemblyName>DualSenseAudioStudio</AssemblyName>
     <RootNamespace>DualSenseAudioStudio</RootNamespace>
-    <Version>1.0.7</Version>
-    <AssemblyVersion>1.0.7.0</AssemblyVersion>
-    <FileVersion>1.0.7.0</FileVersion>
-    <InformationalVersion>1.0.7</InformationalVersion>
+    <Version>1.0.8</Version>
+    <AssemblyVersion>1.0.8.0</AssemblyVersion>
+    <FileVersion>1.0.8.0</FileVersion>
+    <InformationalVersion>1.0.8</InformationalVersion>
     <Product>DualSense Bluetooth Audio</Product>
     <Authors>DualSense Bluetooth Audio contributors</Authors>
     <Description>Stream Windows audio to a DualSense over Bluetooth.</Description>
@@ -22,6 +22,9 @@
     <Copyright>Copyright © 2026 DualSense Bluetooth Audio contributors</Copyright>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+      <!-- Precompiled (faster start, steadier timing) with profile-guided JIT. -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <TieredPGO>true</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>

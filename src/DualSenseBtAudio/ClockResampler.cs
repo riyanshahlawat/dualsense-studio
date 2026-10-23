@@ -20,8 +20,18 @@ internal sealed class ClockResampler
         _resampler.SetFeedMode(true);
     }
 
+    private int _lastInputFrames;
+
     public void Process(float[] input, int inputFrames, float[] output, int outputFrames)
     {
+        // Drift correction feeds 511-513 frames per report: adjust the ratio so the
+        // output is still exactly outputFrames (a pitch change of ~0.2%, inaudible).
+        if (inputFrames != _lastInputFrames)
+        {
+            _resampler.SetRates(48000.0 * inputFrames / outputFrames, 48000);
+            _lastInputFrames = inputFrames;
+        }
+
         int needed = _resampler.ResamplePrepare(inputFrames, Channels, out float[] inBuffer, out int inOffset);
         Array.Copy(input, 0, inBuffer, inOffset, needed * Channels);
 

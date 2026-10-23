@@ -6,15 +6,18 @@
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU</Platforms>
     <RuntimeIdentifiers>win-x64;win-x86</RuntimeIdentifiers>
-    <Version>1.0.7</Version>
-    <AssemblyVersion>1.0.7.0</AssemblyVersion>
-    <FileVersion>1.0.7.0</FileVersion>
-    <InformationalVersion>1.0.7</InformationalVersion>
+    <Version>1.0.8</Version>
+    <AssemblyVersion>1.0.8.0</AssemblyVersion>
+    <FileVersion>1.0.8.0</FileVersion>
+    <InformationalVersion>1.0.8</InformationalVersion>
     <Product>DualSense Bluetooth Audio</Product>
     <Authors>DualSense Bluetooth Audio contributors</Authors>
     <Description>Bluetooth audio engine and HID protocol implementation for DualSense.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright © 2026 DualSense Bluetooth Audio contributors</Copyright>
+      <!-- Precompiled (faster start, steadier timing) with profile-guided JIT. -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <TieredPGO>true</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>

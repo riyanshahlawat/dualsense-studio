@@ -13,6 +13,9 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // No long GC pauses: keeps controller input to games smooth.
+        System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency;
+
         _instanceMutex = new Mutex(true, InstanceName, out bool firstInstance);
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, InstanceName + ".Show");
 

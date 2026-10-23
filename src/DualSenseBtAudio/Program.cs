@@ -99,6 +99,9 @@ internal static class Program
                 return 0;
             }
 
+            // Avoid long garbage-collection pauses while streaming (no tiny audio stutters).
+            System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency;
+
             MicBridge.Enabled = args.Contains("--mic", StringComparer.OrdinalIgnoreCase);
             MicBridge.NoiseRemoval = args.Contains("--noise-removal", StringComparer.OrdinalIgnoreCase);
             MicBridge.Sidetone = args.Contains("--sidetone", StringComparer.OrdinalIgnoreCase);
@@ -297,6 +300,10 @@ internal sealed class DualSenseAudioEngine : IDisposable
     // Low latency mode: smaller PC-side audio buffers (set from --low-latency).
     public static bool LowLatency;
 
+    // Clock-drift correction state.
+    private double _driftCarry;
+    private readonly Dictionary<int, float[]> _driftBuffers = new();
+
     private long _hidWriteCount;
     private long _hidWriteTicksTotal;
     private long _hidWriteTicksMaximum;
@@ -456,6 +463,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
     public void StreamLoopback()
     {
+        ProAudio.EnterThread();
         Console.WriteLine(
             "Loopback captures an existing Windows output.");
         Console.WriteLine(
@@ -647,8 +655,23 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 var dataDeadline =
                     Stopwatch.StartNew();
 
+                // Clock-drift correction: instead of throwing audio away when the buffer
+                // drifts, consume very slightly more or less (at most ±0.4%, inaudible)
+                // to keep it centred on the target. The resampler absorbs the difference.
+                double fillError = (bufferedNow - targetBufferSamples) / (double)targetBufferSamples;
+                _driftCarry += inputFramesPerReport * Math.Clamp(fillError * 0.01, -0.004, 0.004);
+                int driftFrames = (int)_driftCarry;
+                _driftCarry -= driftFrames;
+                int framesThisReport = inputFramesPerReport + driftFrames;
+                if (!_driftBuffers.TryGetValue(framesThisReport, out float[]? driftBuffer))
+                {
+                    driftBuffer = new float[framesThisReport * ProtocolConstants.Channels];
+                    _driftBuffers[framesThisReport] = driftBuffer;
+                }
+                inputSamples = driftBuffer;
+
                 while (
-                    ring.Count < inputSamplesPerReport &&
+                    ring.Count < inputSamples.Length &&
                     dataDeadline.ElapsedMilliseconds < 8 &&
                     !cancellation.IsCancellationRequested &&
                     Volatile.Read(ref stopped) == 0)
@@ -692,7 +715,7 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 _lastInputWindow = inputSamples;
                 _clockResampler.Process(
                     inputSamples,
-                    inputFramesPerReport,
+                    framesThisReport,
                     outputSamples,
                     outputFramesPerReport);
 
@@ -1925,6 +1948,7 @@ internal sealed class QueuedHidReportWriter : IDisposable
 
     private void WriterLoop()
     {
+        ProAudio.EnterThread();
         try
         {
             try
