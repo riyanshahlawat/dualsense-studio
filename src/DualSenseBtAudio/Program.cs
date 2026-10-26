@@ -489,10 +489,12 @@ internal sealed class DualSenseAudioEngine : IDisposable
         using var reportWriter = new QueuedHidReportWriter(
             _hid,
             capacity: 10,
+            // Haptics uses the larger 398-byte 0x36 packet; size the queue for it
+            // (it rejected those packets and crashed the engine).
             reportLength:
                 _options.Protocol == ProtocolVariant.Full39
                     ? ProtocolConstants.FullReportLength
-                    : ProtocolConstants.LegacyReportLength);
+                    : Haptics.Enabled ? HapticsReportLength : ProtocolConstants.LegacyReportLength);
 
         GCLatencyMode previousLatencyMode =
             System.Runtime.GCSettings.LatencyMode;
@@ -526,8 +528,8 @@ internal sealed class DualSenseAudioEngine : IDisposable
                 $"Report period: " +
                 $"{_options.PeriodMs:0.###} ms");
             Console.WriteLine(
-                "ClockFix: 1024 frames PCM → " +
-                "960 Opus frames per Full39 report.");
+                "ClockFix: 512 frames PCM → 480 Opus frames per report" +
+                (Haptics.Enabled ? " (with haptics)." : "."));
             Console.WriteLine(
                 "Press Ctrl+C to stop.");
             Console.WriteLine();
@@ -1173,7 +1175,8 @@ internal sealed class DualSenseAudioEngine : IDisposable
 
     // vDS 0x36 packet (398 bytes): same pacing as Legacy35, plus a 64-byte
     // haptics block (32 stereo int8 frames) derived from the game audio's bass.
-    private readonly byte[] _hapticsReport = new byte[398];
+    private const int HapticsReportLength = 398;
+    private readonly byte[] _hapticsReport = new byte[HapticsReportLength];
 
     private byte[] PrepareHaptics36(float[] samples)
     {
