@@ -19,6 +19,13 @@ internal sealed class TouchpadMouse
 
     // User sensitivity from the app (1.0 = default; 0.3 slow .. 3.0 fast). Shared by all controllers.
     public static volatile float Sensitivity = 1f;
+
+    // Off in fullscreen games: any mouse movement makes games like Fortnite switch to
+    // keyboard/mouse mode and back (aim and controls jerk around). The touchpad then
+    // goes to the game as its normal touchpad button instead.
+    public static volatile bool Enabled = true;
+    public static volatile bool GameInFront;
+    public static bool Active => Enabled && !GameInFront;
     private const double ScrollFriction = 0.93;
 
     public int LastX { get; private set; }

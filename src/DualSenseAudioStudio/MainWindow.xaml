@@ -662,6 +662,8 @@
                                                       Checked="GameControllerCheckBox_Changed" Unchecked="GameControllerCheckBox_Changed"
                                                       Content="Game controller (touchpad = mouse)"
                                                       ToolTip="Uses ViGEmBus. Works without starting audio. Game rumble goes to the DualSense." />
+                                            <CheckBox x:Name="TouchMouseCheckBox" Margin="26,8,0,0" IsChecked="True" Content="Touchpad as mouse (paused in fullscreen games)"
+                                                      Checked="TouchMouseCheckBox_Changed" Unchecked="TouchMouseCheckBox_Changed" ToolTip="Mouse movement makes games like Fortnite switch to keyboard/mouse mode; in fullscreen games the touchpad is the normal game touchpad." />
                                             <Grid Margin="26,8,0,0">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />

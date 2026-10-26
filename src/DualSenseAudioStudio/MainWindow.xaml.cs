@@ -827,7 +827,14 @@ public partial class MainWindow : Window
             _gamepads.Remove(gone);
         }
 
-        foreach (string path in paths.Where(p => _gamepads.All(g => g.DevicePath != p)))
+        // A new controller ID that HidHide doesn't hide means games see two controllers.
+        List<string> newPaths = paths.Where(p => _gamepads.All(g => g.DevicePath != p)).ToList();
+        if (newPaths.Count > 0)
+        {
+            Dispatcher.BeginInvoke(() => EnsureControllersHidden(newPaths), DispatcherPriority.ApplicationIdle);
+        }
+
+        foreach (string path in newPaths)
         {
             int player = Enumerable.Range(1, 4).First(n => _gamepads.All(g => g.Player != n));
             try

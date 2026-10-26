@@ -187,7 +187,8 @@ internal sealed class GamepadBridge : IDisposable
         p.SetButtonState(DualShock4Button.ThumbLeft, (b1 & 0x40) != 0);
         p.SetButtonState(DualShock4Button.ThumbRight, (b1 & 0x80) != 0);
         // PS opens DualSense Studio Home instead of being sent to the game.
-        // Touchpad press is a mouse click (left/right half), not sent to the game.
+        // Touchpad press: a mouse click at the desktop, the normal touchpad button in games.
+        p.SetButtonState(DualShock4SpecialButton.Touchpad, !TouchpadMouse.Active && (b2 & 0x02) != 0);
         p.SubmitReport();
     }
 
@@ -213,7 +214,8 @@ internal sealed class GamepadBridge : IDisposable
         _pad.SetButtonState(Xbox360Button.Y, (b0 & 0x80) != 0);      // Triangle
         _pad.SetButtonState(Xbox360Button.LeftShoulder, (b1 & 0x01) != 0);
         _pad.SetButtonState(Xbox360Button.RightShoulder, (b1 & 0x02) != 0);
-        _pad.SetButtonState(Xbox360Button.Back, (b1 & 0x10) != 0); // Create (touchpad press is a mouse click)
+        // Create, or touchpad press while in a game (it's a mouse click at the desktop).
+        _pad.SetButtonState(Xbox360Button.Back, (b1 & 0x10) != 0 || (!TouchpadMouse.Active && (b2 & 0x02) != 0));
         _pad.SetButtonState(Xbox360Button.Start, (b1 & 0x20) != 0);  // Options
         _pad.SetButtonState(Xbox360Button.LeftThumb, (b1 & 0x40) != 0);
         _pad.SetButtonState(Xbox360Button.RightThumb, (b1 & 0x80) != 0);
@@ -250,7 +252,13 @@ internal sealed class GamepadBridge : IDisposable
             }
         }
 
-        if (s.Length >= 40)
+        if (!TouchpadMouse.Active && _padPressed)
+        {
+            NativeInput.Button(_padRight, down: false); // don't leave a click held when a game takes over
+            _padPressed = false;
+        }
+
+        if (s.Length >= 40 && TouchpadMouse.Active)
         {
             UpdateTouchClick(s.Slice(32, 4), (s[9] & 0x02) != 0);
             _touchpad.Update(s.Slice(32, 8), suppressTapClick: _physicalClick || _padPressed);

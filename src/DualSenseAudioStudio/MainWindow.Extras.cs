@@ -67,6 +67,19 @@ public partial class MainWindow
             Hide();
         }
 
+        // Touchpad mouse pauses while a fullscreen game is in front (checked 4x a second).
+        var gameWatch = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+        gameWatch.Tick += (_, _) =>
+        {
+            bool game = Services.ForegroundGame.IsFullscreenAppInFront();
+            if (game != Services.TouchpadMouse.GameInFront)
+            {
+                Services.TouchpadMouse.GameInFront = game;
+                AppendLog(game ? "Fullscreen game in front: touchpad mouse paused (touchpad goes to the game)." : "Back at the desktop: touchpad mouse on.");
+            }
+        };
+        gameWatch.Start();
+
         _ = CheckForUpdateAsync();
         Dispatcher.BeginInvoke(CheckMicFormat, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
@@ -322,6 +335,39 @@ public partial class MainWindow
         _fastTimer = want;
     }
 
+    private readonly HashSet<string> _hideAsked = new(StringComparer.OrdinalIgnoreCase);
+
+    // Offer to hide a controller ID that HidHide misses (otherwise double input in games).
+    private void EnsureControllersHidden(List<string> hidPaths)
+    {
+        List<string> missing = Services.HidHideGuard.FindUnhidden(hidPaths).Where(id => _hideAsked.Add(id)).ToList();
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        AppendLog($"Controller not hidden from games: {string.Join(", ", missing)}");
+        if (MessageBox.Show(this,
+                "Windows gave your DualSense a new ID, so games can see it twice (the real controller and DualSense Studio's), " +
+                "which makes controls jump around.\n\nHide it from games now? (Windows will ask for permission once.)",
+                "Fix double controller input", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        bool ok = Services.HidHideGuard.Hide(missing);
+        AppendLog(ok ? "Controller hidden from games." : "Could not hide the controller (permission declined?).");
+    }
+
+    private void TouchMouseCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        Services.TouchpadMouse.Enabled = TouchMouseCheckBox.IsChecked == true;
+        if (_initialized)
+        {
+            SavePrefs();
+        }
+    }
+
     // Touchpad speed: applies instantly and is remembered.
     private void TouchpadSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
@@ -368,6 +414,7 @@ public partial class MainWindow
             HapticsCheckBox.IsChecked = prefs.GetValueOrDefault("haptics", false);
             BatteryLightCheckBox.IsChecked = prefs.GetValueOrDefault("batterylight", false);
             LowLatencyCheckBox.IsChecked = prefs.GetValueOrDefault("lowlatency", false);
+            TouchMouseCheckBox.IsChecked = prefs.GetValueOrDefault("touchmouse", true);
 
             string? speed = File.ReadAllLines(PrefsFile).FirstOrDefault(l => l.StartsWith("touchspeed=", StringComparison.Ordinal));
             if (speed is not null && double.TryParse(speed[11..], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double value))
@@ -392,6 +439,7 @@ public partial class MainWindow
                 $"haptics={(HapticsCheckBox.IsChecked == true ? 1 : 0)}",
                 $"batterylight={(BatteryLightCheckBox.IsChecked == true ? 1 : 0)}",
                 $"lowlatency={(LowLatencyCheckBox.IsChecked == true ? 1 : 0)}",
+                $"touchmouse={(TouchMouseCheckBox.IsChecked == true ? 1 : 0)}",
                 $"touchspeed={TouchpadSpeedSlider.Value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}"
             });
         }
